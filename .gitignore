@@ -1,0 +1,7 @@
+# beego stuff
+almond
+lastupdate.tmp
+routers/comments*
+
+# glide
+vendor/

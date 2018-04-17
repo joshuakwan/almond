@@ -1,0 +1,14 @@
+package: github.com/joshuakwan/almond
+import:
+- package: github.com/astaxie/beego
+  version: v1.9.2
+  subpackages:
+  - context/param
+- package: github.com/prometheus/common
+  subpackages:
+  - model
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: 1.6.3
+  subpackages:
+  - convey
