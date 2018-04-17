@@ -6,33 +6,34 @@ import "github.com/prometheus/common/model"
 type Global struct {
 	// ResolveTimeout is the time after which an alert is declared resolved
 	// if it has not been updated.
-	ResolveTimeout model.Duration
+	ResolveTimeout model.Duration `json:"resolve_timeout,omitempty"`
 
 	// The default SMTP From header field.
-	SMTPFrom string
+	SMTPFrom string `json:"smtp_from,omitempty"`
 	// The default SMTP smarthost used for sending emails, including port number.
 	// Port number usually is 25, or 587 for SMTP over TLS (sometimes referred to as STARTTLS).
 	// Example: smtp.example.org:587
-	SMTPSmartHost string
+	SMTPSmartHost string `json:"smtp_smarthost,omitempty"`
 	// The default hostname to identify to the SMTP server.
-	SMTPHello string
+	SMTPHello string `json:"smtp_hello,omitempty"`
 	// SMTP Auth using LOGIN and PLAIN.
-	SMTPAuthUsername string
-	SMTPAuthPassword string
+	SMTPAuthUsername string `json:"smtp_auth_username,omitempty"`
+	SMTPAuthPassword string `json:"smtp_auth_password,omitempty"`
 	// SMTP Auth using PLAIN.
-	SMTPAuthIdentity string
+	SMTPAuthIdentity string `json:"smtp_auth_identity,omitempty"`
 	// SMTP Auth using CRAM-MD5.
-	SMTPAuthSecret Secret
+	SMTPAuthSecret Secret `json:"smtp_auth_secret,omitempty"`
 	// The default SMTP TLS requirement.
-	SMTPRequireTLS bool
+	SMTPRequireTLS bool `json:"smtp_require_tls,omitempty"`
 
-	SlackAPIURL      string
-	VictorOpsAPIKey  string
-	VictorOpsAPIURL  string
-	PagerdutyURL     string
-	OpsGenieAPIKey   string
-	OpsGenieAPIURL   string
-	HipchatAPIURL    string
-	HipchatAuthToken Secret
-	HTTPConfig       HTTPConfig
+	SlackAPIURL      string `json:"slack_api_url,omitempty"`
+	VictorOpsAPIKey  string `json:"victorops_api_key,omitempty"`
+	VictorOpsAPIURL  string `json:"victorops_api_url,omitempty"`
+	PagerdutyURL     string `json:"pagerduty_url,omitempty"`
+	OpsGenieAPIKey   string `json:"opsgenie_api_key,omitempty"`
+	OpsGenieAPIURL   string `json:"opsgenie_api_url,omitempty"`
+	HipchatAPIURL    string `json:"hipchat_api_url,omitempty"`
+	HipchatAuthToken Secret `json:"hipchat_auth_token,omitempty"`
+
+	HTTPConfig HTTPConfig `json:"http_config,omitempty"`
 }
