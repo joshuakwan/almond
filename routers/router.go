@@ -8,21 +8,37 @@
 package routers
 
 import (
-	"github.com/joshuakwan/almond/controllers"
-
 	"github.com/astaxie/beego"
+	"github.com/joshuakwan/almond/controllers/alertmanager"
 )
 
 func init() {
-	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/object",
+	namespaceRoot := "/api/v1"
+	alertmanagerNamespaceRoot := "/alertmanager/config/"
+	ns := beego.NewNamespace(namespaceRoot,
+		beego.NSNamespace(alertmanagerNamespaceRoot,
 			beego.NSInclude(
-				&controllers.ObjectController{},
+				&alertmanager.ConfigController{},
 			),
 		),
-		beego.NSNamespace("/user",
+		beego.NSNamespace(alertmanagerNamespaceRoot+"global",
 			beego.NSInclude(
-				&controllers.UserController{},
+				&alertmanager.GlobalController{},
+			),
+		),
+		beego.NSNamespace(alertmanagerNamespaceRoot+"routes",
+			beego.NSInclude(
+				&alertmanager.RouteController{},
+			),
+		),
+		beego.NSNamespace(alertmanagerNamespaceRoot+"inhibitions",
+			beego.NSInclude(
+				&alertmanager.InhibitionController{},
+			),
+		),
+		beego.NSNamespace(alertmanagerNamespaceRoot+"receivers",
+			beego.NSInclude(
+				&alertmanager.ReceiverController{},
 			),
 		),
 	)

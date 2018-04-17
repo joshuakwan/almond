@@ -2,6 +2,8 @@
 almond
 lastupdate.tmp
 routers/comments*
+swagger/
+*.pprof
 
 # glide
 vendor/

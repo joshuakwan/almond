@@ -1,9 +1,12 @@
 package alertmanager
 
 import (
+	"io/ioutil"
+	"regexp"
 	"time"
 
 	"github.com/prometheus/common/model"
+	"gopkg.in/yaml.v2"
 )
 
 var defaultGlobal = Global{
@@ -88,4 +91,48 @@ var defaultVictorOpsConfig = VictorOpsConfig{
 
 var defaultWebhookConfig = WebhookConfig{
 	SendResolved: true,
+}
+
+func (re *Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	if err := unmarshal(&s); err != nil {
+		return err
+	}
+	regex, err := regexp.Compile("^(?:" + s + ")$")
+	if err != nil {
+		return err
+	}
+	re.Regexp = regex
+	return nil
+}
+
+func (re Regexp) MarshalYAML() (interface{}, error) {
+	if re.Regexp != nil {
+		return re.String(), nil
+	}
+	return nil, nil
+}
+
+func LoadConfig(str string) (*Config, error) {
+	config := &Config{}
+	err := yaml.Unmarshal([]byte(str), config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	config.raw = str
+	return config, nil
+}
+
+func LoadConfigFromFile(filename string) (*Config, error) {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	config, err := LoadConfig(string(content))
+	if err != nil {
+		return nil, err
+	}
+	return config, err
 }
