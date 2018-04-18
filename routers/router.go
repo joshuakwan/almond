@@ -43,4 +43,6 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
+
+	//prometheusNamespaceRoot := "/prometheus/config/"
 }

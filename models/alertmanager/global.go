@@ -1,6 +1,9 @@
 package alertmanager
 
-import "github.com/prometheus/common/model"
+import (
+	"github.com/joshuakwan/almond/models/common"
+	"github.com/prometheus/common/model"
+)
 
 // Global defines the global part of alertmanager configuration
 type Global struct {
@@ -22,18 +25,18 @@ type Global struct {
 	// SMTP Auth using PLAIN.
 	SMTPAuthIdentity string `json:"smtp_auth_identity,omitempty" yaml:"smtp_auth_identity,omitempty"`
 	// SMTP Auth using CRAM-MD5.
-	SMTPAuthSecret Secret `json:"smtp_auth_secret,omitempty" yaml:"smtp_auth_secret,omitempty"`
+	SMTPAuthSecret common.Secret `json:"smtp_auth_secret,omitempty" yaml:"smtp_auth_secret,omitempty"`
 	// The default SMTP TLS requirement.
 	SMTPRequireTLS bool `json:"smtp_require_tls,omitempty" yaml:"smtp_require_tls,omitempty"`
 
-	SlackAPIURL      string `json:"slack_api_url,omitempty" yaml:"slack_api_url,omitempty"`
-	VictorOpsAPIKey  string `json:"victorops_api_key,omitempty" yaml:"victorops_api_key,omitempty"`
-	VictorOpsAPIURL  string `json:"victorops_api_url,omitempty" yaml:"victorops_api_url,omitempty"`
-	PagerdutyURL     string `json:"pagerduty_url,omitempty" yaml:"pagerduty_url,omitempty"`
-	OpsGenieAPIKey   string `json:"opsgenie_api_key,omitempty" yaml:"opsgenie_api_key,omitempty"`
-	OpsGenieAPIURL   string `json:"opsgenie_api_url,omitempty" yaml:"opsgenie_api_url,omitempty"`
-	HipchatAPIURL    string `json:"hipchat_api_url,omitempty" yaml:"hipchat_api_url,omitempty"`
-	HipchatAuthToken Secret `json:"hipchat_auth_token,omitempty" yaml:"hipchat_auth_token,omitempty"`
+	SlackAPIURL      string        `json:"slack_api_url,omitempty" yaml:"slack_api_url,omitempty"`
+	VictorOpsAPIKey  string        `json:"victorops_api_key,omitempty" yaml:"victorops_api_key,omitempty"`
+	VictorOpsAPIURL  string        `json:"victorops_api_url,omitempty" yaml:"victorops_api_url,omitempty"`
+	PagerdutyURL     string        `json:"pagerduty_url,omitempty" yaml:"pagerduty_url,omitempty"`
+	OpsGenieAPIKey   string        `json:"opsgenie_api_key,omitempty" yaml:"opsgenie_api_key,omitempty"`
+	OpsGenieAPIURL   string        `json:"opsgenie_api_url,omitempty" yaml:"opsgenie_api_url,omitempty"`
+	HipchatAPIURL    string        `json:"hipchat_api_url,omitempty" yaml:"hipchat_api_url,omitempty"`
+	HipchatAuthToken common.Secret `json:"hipchat_auth_token,omitempty" yaml:"hipchat_auth_token,omitempty"`
 
 	HTTPConfig HTTPConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
 }

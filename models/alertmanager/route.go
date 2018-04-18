@@ -1,6 +1,9 @@
 package alertmanager
 
-import "github.com/prometheus/common/model"
+import (
+	"github.com/joshuakwan/almond/models/common"
+	"github.com/prometheus/common/model"
+)
 
 // Route represents a routing rule
 type Route struct {
@@ -14,7 +17,7 @@ type Route struct {
 	// A set of equality matchers an alert has to fulfill to match the node.
 	Match map[string]string `json:"match,omitempty" yaml:"match,omitempty"`
 	// A set of regex-matchers an alert has to fulfill to match the node.
-	MatchRe map[string]Regexp `json:"match_re,omitempty" yaml:"match_re,omitempty"`
+	MatchRe map[string]common.Regexp `json:"match_re,omitempty" yaml:"match_re,omitempty"`
 
 	// How long to initially wait to send a notification for a group
 	// of alerts. Allows to wait for an inhibiting alert to arrive or collect

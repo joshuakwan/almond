@@ -2,7 +2,6 @@ package alertmanager
 
 import (
 	"io/ioutil"
-	"regexp"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -93,26 +92,27 @@ var defaultWebhookConfig = WebhookConfig{
 	SendResolved: true,
 }
 
-func (re *Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
-	if err := unmarshal(&s); err != nil {
-		return err
-	}
-	regex, err := regexp.Compile("^(?:" + s + ")$")
-	if err != nil {
-		return err
-	}
-	re.Regexp = regex
-	return nil
-}
+// func (re *common.Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// 	var s string
+// 	if err := unmarshal(&s); err != nil {
+// 		return err
+// 	}
+// 	regex, err := regexp.Compile("^(?:" + s + ")$")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	re.Regexp = regex
+// 	return nil
+// }
 
-func (re Regexp) MarshalYAML() (interface{}, error) {
-	if re.Regexp != nil {
-		return re.String(), nil
-	}
-	return nil, nil
-}
+// func (re common.Regexp) MarshalYAML() (interface{}, error) {
+// 	if re.Regexp != nil {
+// 		return re.String(), nil
+// 	}
+// 	return nil, nil
+// }
 
+// LoadConfig loads alertmanager configuration into object from a string
 func LoadConfig(str string) (*Config, error) {
 	config := &Config{}
 	err := yaml.Unmarshal([]byte(str), config)
@@ -125,6 +125,7 @@ func LoadConfig(str string) (*Config, error) {
 	return config, nil
 }
 
+// LoadConfigFromFile loads alertmanager configuration into object from a file
 func LoadConfigFromFile(filename string) (*Config, error) {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {

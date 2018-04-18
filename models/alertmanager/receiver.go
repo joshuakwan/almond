@@ -1,6 +1,9 @@
 package alertmanager
 
-import "github.com/prometheus/common/model"
+import (
+	"github.com/joshuakwan/almond/models/common"
+	"github.com/prometheus/common/model"
+)
 
 // Receiver defines a receive who receives alerts
 type Receiver struct {
@@ -32,10 +35,10 @@ type EmailConfig struct {
 	Hello string `json:"hello,omitempty" yaml:"hello,omitempty"`
 
 	// SMTP authentication information.
-	AuthUsername string `json:"auth_username,omitempty" yaml:"auth_username,omitempty"`
-	AuthPassword string `json:"auth_password,omitempty" yaml:"auth_password,omitempty"`
-	AuthSecret   Secret `json:"auth_secret,omitempty" yaml:"auth_secret,omitempty"`
-	AuthIdentity string `json:"auth_identity,omitempty" yaml:"auth_identity,omitempty"`
+	AuthUsername string        `json:"auth_username,omitempty" yaml:"auth_username,omitempty"`
+	AuthPassword string        `json:"auth_password,omitempty" yaml:"auth_password,omitempty"`
+	AuthSecret   common.Secret `json:"auth_secret,omitempty" yaml:"auth_secret,omitempty"`
+	AuthIdentity string        `json:"auth_identity,omitempty" yaml:"auth_identity,omitempty"`
 	// The SMTP TLS requirement.
 	RequireTLS bool `json:"require_tls,omitempty" yaml:"require_tls,omitempty"`
 	// The HTML body of the email notification.
@@ -55,7 +58,7 @@ type HipchatConfig struct {
 	// The HipChat Room ID.
 	RoomID string `json:"room_id,omitempty" yaml:"room_id,omitempty"`
 	// The auth token.
-	AuthToken Secret `json:"auth_token,omitempty" yaml:"auth_token,omitempty"`
+	AuthToken common.Secret `json:"auth_token,omitempty" yaml:"auth_token,omitempty"`
 	// The URL to send API requests to.
 	APIURL string `json:"api_url,omitempty" yaml:"api_url,omitempty"`
 
@@ -81,9 +84,9 @@ type PagerdutyConfig struct {
 
 	// The following two options are mututally exclusive.
 	// The PagerDuty integration key (when using PagerDuty integration type `Events API v2`).
-	RoutingKey Secret `json:"routing_key,omitempty" yaml:"routing_key,omitempty"`
+	RoutingKey common.Secret `json:"routing_key,omitempty" yaml:"routing_key,omitempty"`
 	// The PagerDuty integration key (when using PagerDuty integration type `Prometheus`).
-	ServiceKey Secret `json:"service_key,omitempty" yaml:"service_key,omitempty"`
+	ServiceKey common.Secret `json:"service_key,omitempty" yaml:"service_key,omitempty"`
 	// The URL to send API requests to
 	URL string `json:"url,omitempty" yaml:"url,omitempty"`
 	// The client identification of the Alertmanager.
@@ -107,9 +110,9 @@ type PushoverConfig struct {
 	SendResolved bool `json:"send_resolved" yaml:"send_resolved"`
 
 	// The recipient user’s user key.
-	UserKey Secret `json:"user_key,omitempty" yaml:"user_key,omitempty"`
+	UserKey common.Secret `json:"user_key,omitempty" yaml:"user_key,omitempty"`
 	// Your registered application’s API token, see https://pushover.net/apps
-	Token Secret `json:"token,omitempty" yaml:"token,omitempty"`
+	Token common.Secret `json:"token,omitempty" yaml:"token,omitempty"`
 
 	// Notification title.
 	Title string `json:"title,omitempty" yaml:"title,omitempty"`
@@ -135,7 +138,7 @@ type SlackConfig struct {
 	SendResolved bool `json:"send_resolved" yaml:"send_resolved"`
 
 	// The Slack webhook URL.
-	APIURL Secret `json:"api_url,omitempty" yaml:"api_url,omitempty"`
+	APIURL common.Secret `json:"api_url,omitempty" yaml:"api_url,omitempty"`
 	// The channel or user to send notifications to.
 	Channel string `json:"channel,omitempty" yaml:"channel,omitempty"`
 
@@ -159,7 +162,7 @@ type OpsGenieConfig struct {
 	SendResolved bool `json:"send_resolved" yaml:"send_resolved"`
 
 	// The API key to use when talking to the OpsGenie API.
-	APIKey Secret `json:"api_key,omitempty" yaml:"api_key,omitempty"`
+	APIKey common.Secret `json:"api_key,omitempty" yaml:"api_key,omitempty"`
 	// The host to send OpsGenie API requests to.
 	APIURL string `json:"api_url,omitempty" yaml:"api_url,omitempty"`
 
@@ -200,7 +203,7 @@ type VictorOpsConfig struct {
 	SendResolved bool `json:"send_resolved" yaml:"send_resolved"`
 
 	// The API key to use when talking to the VictorOps API.
-	APIKey Secret `json:"api_key,omitempty" yaml:"api_key,omitempty"`
+	APIKey common.Secret `json:"api_key,omitempty" yaml:"api_key,omitempty"`
 	// The VictorOps API URL.
 	APIURL string `json:"api_url,omitempty" yaml:"api_url,omitempty"`
 
