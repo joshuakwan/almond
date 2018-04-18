@@ -5,7 +5,10 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"github.com/joshuakwan/almond/models/common"
 	"gopkg.in/yaml.v2"
+	"github.com/fatih/structs"
+	"strings"
 )
 
 var defaultGlobal = Global{
@@ -92,28 +95,17 @@ var defaultWebhookConfig = WebhookConfig{
 	SendResolved: true,
 }
 
-// func (re *common.Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
-// 	var s string
-// 	if err := unmarshal(&s); err != nil {
-// 		return err
-// 	}
-// 	regex, err := regexp.Compile("^(?:" + s + ")$")
-// 	if err != nil {
-// 		return err
-// 	}
-// 	re.Regexp = regex
-// 	return nil
-// }
+func buildDefaultConfig() (*Config) {
+	defaultConfig := &Config{}
+	defaultConfig.Global = &defaultGlobal
+	defaultConfig.Route = &defaultRoute
 
-// func (re common.Regexp) MarshalYAML() (interface{}, error) {
-// 	if re.Regexp != nil {
-// 		return re.String(), nil
-// 	}
-// 	return nil, nil
-// }
+	return defaultConfig
+}
 
 // LoadConfig loads alertmanager configuration into object from a string
 func LoadConfig(str string) (*Config, error) {
+	defaultConfig := buildDefaultConfig()
 	config := &Config{}
 	err := yaml.Unmarshal([]byte(str), config)
 
@@ -122,6 +114,10 @@ func LoadConfig(str string) (*Config, error) {
 	}
 
 	config.raw = str
+
+	// Set default part
+	common.Update(config, defaultConfig)
+
 	return config, nil
 }
 
@@ -136,4 +132,28 @@ func LoadConfigFromFile(filename string) (*Config, error) {
 		return nil, err
 	}
 	return config, err
+}
+
+func SaveConfigToFile(config *Config, filename string) error {
+	bytes, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, bytes, 0644)
+}
+
+func (dst *Global) Update(src *Global) {
+	common.Update(dst, src)
+}
+
+func (g *Global) Delete(key string) {
+	for _, field := range (structs.Fields(g)) {
+		tagName := field.Tag("json")
+		parts := strings.Split(tagName, ",")
+		if key == parts[0] {
+			field.Zero()
+			break
+		}
+	}
+
 }

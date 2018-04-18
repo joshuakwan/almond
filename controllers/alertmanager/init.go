@@ -19,3 +19,11 @@ func getTotalConfig() *alertmanager.Config {
 	}
 	return cfg
 }
+
+func writeTotalConfig() {
+	log.Println("Write alertmanager configuration to " + configFilename)
+	err := alertmanager.SaveConfigToFile(config, configFilename)
+	if err != nil {
+		panic(err)
+	}
+}

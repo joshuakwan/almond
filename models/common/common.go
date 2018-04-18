@@ -2,6 +2,7 @@ package common
 
 import (
 	"regexp"
+	"github.com/getlantern/deepcopy"
 )
 
 // Secret represents a Secret string
@@ -49,4 +50,8 @@ func (re Regexp) MarshalYAML() (interface{}, error) {
 		return re.String(), nil
 	}
 	return nil, nil
+}
+
+func Update(dst interface{}, src interface{}) {
+	deepcopy.Copy(dst, src)
 }

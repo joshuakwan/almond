@@ -7,3 +7,6 @@ swagger/
 
 # glide
 vendor/
+
+# goland stuff
+.idea/
