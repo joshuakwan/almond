@@ -10,6 +10,8 @@ type Config struct {
 	Alerting      *Alerting       `json:"alerting,omitempty" yaml:"alerting,omitempty"`
 	RemoteWrite   *RemoteWrite    `json:"remote_write,omitempty" yaml:"remote_write,omitempty"`
 	RemoteRead    *RemoteRead     `json:"remote_read,omitempty" yaml:"remote_read,omitempty"`
+
+	raw string
 }
 
 // StaticConfig represents static_configs

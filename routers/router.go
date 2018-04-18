@@ -10,12 +10,13 @@ package routers
 import (
 	"github.com/astaxie/beego"
 	"github.com/joshuakwan/almond/controllers/alertmanager"
+	"github.com/joshuakwan/almond/controllers/prometheus"
 )
 
 func init() {
 	namespaceRoot := "/api/v1"
 	alertmanagerNamespaceRoot := "/alertmanager/config/"
-	ns := beego.NewNamespace(namespaceRoot,
+	nsAlertmanager := beego.NewNamespace(namespaceRoot,
 		beego.NSNamespace(alertmanagerNamespaceRoot,
 			beego.NSInclude(
 				&alertmanager.ConfigController{},
@@ -42,7 +43,15 @@ func init() {
 			),
 		),
 	)
-	beego.AddNamespace(ns)
+	beego.AddNamespace(nsAlertmanager)
 
-	//prometheusNamespaceRoot := "/prometheus/config/"
+	prometheusNamespaceRoot := "/prometheus/config/"
+	nsPrometheus := beego.NewNamespace(namespaceRoot,
+		beego.NSNamespace(prometheusNamespaceRoot,
+			beego.NSInclude(
+				&prometheus.ConfigController{},
+			),
+		),
+	)
+	beego.AddNamespace(nsPrometheus)
 }
