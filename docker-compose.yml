@@ -7,13 +7,17 @@ services:
       - ./resources:/etc/almond
     ports:
       - "8080:8080"
+    links:
+      - alertmanager
 
   alertmanager:
     image: prom/alertmanager
     depends_on:
       - almond
     restart: on-failure
+    ports:
+      - "9093:9093"
     volumes:
       - ./resources:/etc/almond:ro
     command:
-      - --config.file=/etc/almond/config.yml
+      - --config.file=/etc/almond/alertmanager.yml

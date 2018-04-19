@@ -7,7 +7,7 @@ import (
 	"github.com/joshuakwan/almond/models/prometheus"
 )
 
-var configFilename = beego.AppConfig.String("prometheus_config")
+var configFilename = beego.AppConfig.String(beego.AppConfig.String("runmode")+"::prometheus_config")
 
 var config = getTotalConfig()
 

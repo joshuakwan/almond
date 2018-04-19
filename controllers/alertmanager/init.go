@@ -3,11 +3,11 @@ package alertmanager
 import (
 	"log"
 
-	"github.com/astaxie/beego"
 	"github.com/joshuakwan/almond/models/alertmanager"
+	"github.com/astaxie/beego"
 )
 
-var configFilename = beego.AppConfig.String("alertmanager_config")
+var configFilename = beego.AppConfig.String(beego.AppConfig.String("runmode")+"::alertmanager_config")
 
 var config = getTotalConfig()
 
