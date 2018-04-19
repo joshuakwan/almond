@@ -1,7 +1,7 @@
 # beego stuff
 almond
 lastupdate.tmp
-routers/comments*
+#routers/comments*
 swagger/
 *.pprof
 
