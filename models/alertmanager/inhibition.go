@@ -3,6 +3,7 @@ package alertmanager
 import (
 	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/common/model"
+	"errors"
 )
 
 // InhibitRule defines a inhibition rule
@@ -15,4 +16,17 @@ type InhibitRule struct {
 	SourceMatchRe map[string]common.Regexp `json:"source_match_re,omitempty" yaml:"source_match_re,omitempty"`
 	// Labels that must have an equal value in the source and target alert for the inhibition to take effect.
 	Equal model.LabelNames `json:"equal,omitempty" yaml:"equal,omitempty"`
+}
+
+func AddInhibitRule(rules []*InhibitRule, newRule *InhibitRule) []*InhibitRule {
+	return append(rules, newRule)
+}
+
+func RemoveInhibitRule(rules []*InhibitRule, index int) ([]*InhibitRule, error) {
+	if index >= len(rules) || index < 0 {
+		return nil, errors.New("Index " + string(index) + " not in the right range")
+	}
+
+	copy(rules[index:], rules[index+1:])
+	return rules[:len(rules)-1], nil
 }

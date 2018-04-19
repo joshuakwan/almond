@@ -19,6 +19,10 @@ type BasicAuth struct {
 	Password Secret `json:"password" yaml:"username"`
 }
 
+type Message struct {
+	Text string `json:"message"`
+}
+
 // TLSConfig defines TLS configuration items
 type TLSConfig struct {
 	// CA certificate to validate the server certificate with.

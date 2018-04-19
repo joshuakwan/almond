@@ -3,6 +3,8 @@ package alertmanager
 import (
 	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/common/model"
+	"github.com/fatih/structs"
+	"strings"
 )
 
 // Global defines the global part of alertmanager configuration
@@ -39,4 +41,20 @@ type Global struct {
 	HipchatAuthToken common.Secret `json:"hipchat_auth_token,omitempty" yaml:"hipchat_auth_token,omitempty"`
 
 	HTTPConfig HTTPConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
+}
+
+func (dst *Global) Update(src *Global) {
+	common.Update(dst, src)
+}
+
+func (g *Global) Delete(key string) {
+	for _, field := range (structs.Fields(g)) {
+		tagName := field.Tag("json")
+		parts := strings.Split(tagName, ",")
+		if key == parts[0] {
+			field.Zero()
+			break
+		}
+	}
+
 }

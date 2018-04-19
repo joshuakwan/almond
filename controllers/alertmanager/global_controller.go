@@ -25,11 +25,18 @@ func (g *GlobalController) GetAll() {
 func (g *GlobalController) Put() {
 	currentConfig := config.Global
 	var newGlobal alertmanager.Global
+
 	body := g.Ctx.Input.RequestBody
+	log.Println(string(body))
+
 	json.Unmarshal(body, &newGlobal)
+	log.Println(newGlobal)
+
 	currentConfig.Update(&newGlobal)
 	log.Println(currentConfig)
+
 	writeTotalConfig()
+
 	g.Data["json"] = currentConfig
 	g.ServeJSON()
 }
@@ -39,10 +46,14 @@ func (g *GlobalController) Put() {
 // @router /:key [delete]
 func (g *GlobalController) Delete() {
 	currentConfig := config.Global
+
 	key := g.GetString(":key")
 	log.Println(key)
+
 	currentConfig.Delete(key)
+
 	writeTotalConfig()
+
 	g.Data["json"] = currentConfig
 	g.ServeJSON()
 }

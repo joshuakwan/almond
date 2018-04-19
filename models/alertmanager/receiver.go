@@ -3,6 +3,8 @@ package alertmanager
 import (
 	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/common/model"
+
+	"errors"
 )
 
 // Receiver defines a receive who receives alerts
@@ -219,4 +221,25 @@ type VictorOpsConfig struct {
 	MonitoringTool string `json:"monitoring_tool,omitempty" yaml:"monitoring_tool,omitempty"`
 
 	HTTPConfig *HTTPConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
+}
+
+func AddReceiver(receivers []*Receiver, newReceiver *Receiver) ([]*Receiver, error) {
+	for _, receiver := range (receivers) {
+		if receiver.Name == newReceiver.Name {
+			return nil, errors.New("Receiver " + newReceiver.Name + " already exists")
+		}
+	}
+
+	return append(receivers, newReceiver), nil
+}
+
+func RemoveReceiver(receivers []*Receiver, name string) ([]*Receiver, error) {
+	for i, receiver := range (receivers) {
+		if receiver.Name == name {
+			copy(receivers[i:], receivers[i+1:])
+			return receivers[:len(receivers)-1], nil
+		}
+	}
+
+	return nil, errors.New("Receiver " + name + " not found")
 }

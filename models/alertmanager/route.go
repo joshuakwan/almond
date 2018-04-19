@@ -1,8 +1,8 @@
 package alertmanager
 
 import (
-	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/common/model"
+	"errors"
 )
 
 // Route represents a routing rule
@@ -17,7 +17,7 @@ type Route struct {
 	// A set of equality matchers an alert has to fulfill to match the node.
 	Match map[string]string `json:"match,omitempty" yaml:"match,omitempty"`
 	// A set of regex-matchers an alert has to fulfill to match the node.
-	MatchRe map[string]common.Regexp `json:"match_re,omitempty" yaml:"match_re,omitempty"`
+	MatchRe map[string]string `json:"match_re,omitempty" yaml:"match_re,omitempty"`
 
 	// How long to initially wait to send a notification for a group
 	// of alerts. Allows to wait for an inhibiting alert to arrive or collect
@@ -33,4 +33,19 @@ type Route struct {
 
 	// 0 or more child routes
 	Routes []*Route `json:"routes,omitempty" yaml:"routes,omitempty"`
+}
+
+func Addubroute(route *Route, subroute *Route) *Route {
+	route.Routes = append(route.Routes, subroute)
+	return route
+}
+
+func RemoveSubroute(route *Route, index int) (*Route, error) {
+	if index >= len(route.Routes) || index < 0 {
+		return nil, errors.New("Index " + string(index) + " not in the right range")
+	}
+	subroutes := route.Routes
+	copy(subroutes[index:], subroutes[index+1:])
+	route.Routes = subroutes[:len(subroutes)-1]
+	return route, nil
 }

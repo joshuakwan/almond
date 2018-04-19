@@ -7,8 +7,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/joshuakwan/almond/models/common"
 	"gopkg.in/yaml.v2"
-	"github.com/fatih/structs"
-	"strings"
 )
 
 var defaultGlobal = Global{
@@ -142,18 +140,3 @@ func SaveConfigToFile(config *Config, filename string) error {
 	return ioutil.WriteFile(filename, bytes, 0644)
 }
 
-func (dst *Global) Update(src *Global) {
-	common.Update(dst, src)
-}
-
-func (g *Global) Delete(key string) {
-	for _, field := range (structs.Fields(g)) {
-		tagName := field.Tag("json")
-		parts := strings.Split(tagName, ",")
-		if key == parts[0] {
-			field.Zero()
-			break
-		}
-	}
-
-}
