@@ -38,7 +38,7 @@ func (r *RouteController) Post() {
 	config.Route = alertmanager.Addubroute(currentConfig, &newSubroute)
 	log.Println(config.Route)
 
-	writeTotalConfig()
+	go refreshAlertmanager()
 
 	r.Data["json"] = config.Route
 	r.ServeJSON()
@@ -60,7 +60,7 @@ func (r *RouteController) Delete() {
 		} else {
 			config.Route = route
 			log.Println(config.Route)
-			writeTotalConfig()
+			go refreshAlertmanager()
 			r.Data["json"] = config.Route
 		}
 	}

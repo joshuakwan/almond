@@ -35,7 +35,7 @@ func (g *GlobalController) Put() {
 	currentConfig.Update(&newGlobal)
 	log.Println(currentConfig)
 
-	writeTotalConfig()
+	go refreshAlertmanager()
 
 	g.Data["json"] = currentConfig
 	g.ServeJSON()
@@ -52,7 +52,7 @@ func (g *GlobalController) Delete() {
 
 	currentConfig.Delete(key)
 
-	writeTotalConfig()
+	go refreshAlertmanager()
 
 	g.Data["json"] = currentConfig
 	g.ServeJSON()

@@ -38,7 +38,7 @@ func (i *InhibitionController) Post() {
 	config.InhibitRules = alertmanager.AddInhibitRule(currentConfig, &newRule)
 	log.Println(config.InhibitRules)
 
-	writeTotalConfig()
+	go refreshAlertmanager()
 
 	i.Data["json"] = config.InhibitRules
 	i.ServeJSON()
@@ -60,7 +60,7 @@ func (i *InhibitionController) Delete() {
 		} else {
 			config.InhibitRules = rules
 			log.Println(config.InhibitRules)
-			writeTotalConfig()
+			go refreshAlertmanager()
 			i.Data["json"] = config.InhibitRules
 		}
 	}

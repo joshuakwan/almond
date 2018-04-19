@@ -42,7 +42,7 @@ func (r *ReceiverController) Post() {
 		r.Data["json"] = message
 	} else {
 		config.Receivers = receivers
-		writeTotalConfig()
+		go refreshAlertmanager()
 		r.Data["json"] = config.Receivers
 	}
 
@@ -65,7 +65,7 @@ func (r *ReceiverController) Delete() {
 		r.Data["json"] = message
 	} else {
 		config.Receivers = receivers
-		writeTotalConfig()
+		go refreshAlertmanager()
 		r.Data["json"] = config.Receivers
 	}
 

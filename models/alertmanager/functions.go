@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/joshuakwan/almond/models/common"
 	"gopkg.in/yaml.v2"
+	"sync"
 )
 
 var defaultGlobal = Global{
@@ -132,11 +133,14 @@ func LoadConfigFromFile(filename string) (*Config, error) {
 	return config, err
 }
 
+var mu sync.Mutex
+
 func SaveConfigToFile(config *Config, filename string) error {
+	mu.Lock()
+	defer mu.Unlock()
 	bytes, err := yaml.Marshal(config)
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(filename, bytes, 0644)
 }
-
