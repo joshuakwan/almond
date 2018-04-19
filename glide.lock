@@ -1,5 +1,5 @@
-hash: c2f550b38ba007102a15ae061af62eee88a9ddf4a682d0f5b3735dc8e55ee55e
-updated: 2018-04-17T09:40:09.178636+08:00
+hash: 8fe825a38bf39b066cb9f5d092a2db80147bb8fdc507c71227f37925b0a92bcc
+updated: 2018-04-19T12:44:32.701367+08:00
 imports:
 - name: github.com/astaxie/beego
   version: bf5c5626ab429e66d88602e1ab1ab5fbf4629a01
@@ -12,8 +12,10 @@ imports:
   - session
   - toolbox
   - utils
-- name: github.com/ghodss/yaml
-  version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
+- name: github.com/fatih/structs
+  version: a720dfa8df582c51dee1b36feabb906bde1588bd
+- name: github.com/getlantern/deepcopy
+  version: b923171e8640f94369e21e324b1b0465cb82ec9f
 - name: github.com/prometheus/common
   version: d0f7cd64bda49e08b22ae8a730aa57aa0db125d6
   subpackages:

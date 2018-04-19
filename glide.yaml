@@ -7,6 +7,10 @@ import:
 - package: github.com/prometheus/common
   subpackages:
   - model
+- package: github.com/fatih/structs
+  version: v1.0
+- package: github.com/getlantern/deepcopy
+  version: v1
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
