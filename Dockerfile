@@ -8,4 +8,6 @@ RUN go get github.com/astaxie/beego && \
 
 WORKDIR /go/src/github.com/joshuakwan/almond
 
+ENV ALMOND_RUNMODE="prd"
+
 CMD ["bee", "run"]

@@ -1,0 +1,19 @@
+version: "3.2"
+
+services:
+  almond:
+    image: joshuakwan/almond
+    volumes:
+      - ./resources:/etc/almond
+    ports:
+      - "8080:8080"
+
+  alertmanager:
+    image: prom/alertmanager
+    depends_on:
+      - almond
+    restart: on-failure
+    volumes:
+      - ./resources:/etc/almond:ro
+    command:
+      - --config.file=/etc/almond/config.yml
