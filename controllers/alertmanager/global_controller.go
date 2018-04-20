@@ -2,9 +2,10 @@ package alertmanager
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/joshuakwan/almond/models/alertmanager"
 	"encoding/json"
+	"github.com/prometheus/alertmanager/config"
 	"log"
+	"github.com/joshuakwan/almond/models/alertmanager"
 )
 
 type GlobalController struct {
@@ -15,7 +16,7 @@ type GlobalController struct {
 // @Description get global settings
 // @router / [get]
 func (g *GlobalController) GetAll() {
-	g.Data["json"] = config.Global
+	g.Data["json"] = liveConfig.Global
 	g.ServeJSON()
 }
 
@@ -23,8 +24,8 @@ func (g *GlobalController) GetAll() {
 // @Description update global settings, partial update is supported
 // @router / [put]
 func (g *GlobalController) Put() {
-	currentConfig := config.Global
-	var newGlobal alertmanager.Global
+	currentConfig := liveConfig.Global
+	var newGlobal config.GlobalConfig
 
 	body := g.Ctx.Input.RequestBody
 	log.Println(string(body))
@@ -32,7 +33,7 @@ func (g *GlobalController) Put() {
 	json.Unmarshal(body, &newGlobal)
 	log.Println(newGlobal)
 
-	currentConfig.Update(&newGlobal)
+	alertmanager.Update(currentConfig,&newGlobal)
 	log.Println(currentConfig)
 
 	go refreshAlertmanager()
@@ -45,12 +46,12 @@ func (g *GlobalController) Put() {
 // @Description delete an item in global settings with the specified key
 // @router /:key [delete]
 func (g *GlobalController) Delete() {
-	currentConfig := config.Global
+	currentConfig := liveConfig.Global
 
 	key := g.GetString(":key")
 	log.Println(key)
 
-	currentConfig.Delete(key)
+	alertmanager.Delete(currentConfig,key)
 
 	go refreshAlertmanager()
 

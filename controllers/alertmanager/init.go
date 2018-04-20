@@ -4,24 +4,25 @@ import (
 	"log"
 
 	"github.com/joshuakwan/almond/models/alertmanager"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/astaxie/beego"
 	"net/http"
 )
 
 var (
 	configFilename = beego.AppConfig.String(beego.AppConfig.String("runmode")+"::alertmanager_config")
-	config = getTotalConfig()
+	liveConfig = getTotalConfig()
 
 	alertmanagerUrl = beego.AppConfig.String(beego.AppConfig.String("runmode")+"::alertmanager_url")
 )
 
-func getTotalConfig() *alertmanager.Config {
+func getTotalConfig() *config.Config {
 	log.Println("Read alertmanager configuration from " + configFilename)
-	cfg, err := alertmanager.LoadConfigFromFile(configFilename)
+	cfgLoad, _, err := config.LoadFile(configFilename)
 	if err != nil {
 		panic(err)
 	}
-	return cfg
+	return cfgLoad
 }
 
 func refreshAlertmanager() {
@@ -31,7 +32,7 @@ func refreshAlertmanager() {
 
 func writeTotalConfig() {
 	log.Println("Write alertmanager configuration to " + configFilename)
-	err := alertmanager.SaveConfigToFile(config, configFilename)
+	err := alertmanager.SaveConfigToFile(liveConfig, configFilename)
 	if err != nil {
 		panic(err)
 	}

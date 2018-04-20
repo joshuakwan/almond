@@ -6,6 +6,7 @@ import (
 	"log"
 	"encoding/json"
 	"github.com/joshuakwan/almond/models/common"
+	"github.com/prometheus/alertmanager/config"
 )
 
 type ReceiverController struct {
@@ -16,7 +17,7 @@ type ReceiverController struct {
 // @Description get receiver settings
 // @router / [get]
 func (r *ReceiverController) GetAll() {
-	r.Data["json"] = config.Receivers
+	r.Data["json"] = liveConfig.Receivers
 	r.ServeJSON()
 }
 
@@ -24,10 +25,10 @@ func (r *ReceiverController) GetAll() {
 // @Description add a new receiver
 // @router / [post]
 func (r *ReceiverController) Post() {
-	currentConfig := config.Receivers
+	currentConfig := liveConfig.Receivers
 	log.Println(len(currentConfig))
 
-	var newReceiver alertmanager.Receiver
+	var newReceiver config.Receiver
 
 	body := r.Ctx.Input.RequestBody
 	log.Println(string(body))
@@ -41,9 +42,9 @@ func (r *ReceiverController) Post() {
 		message := common.Message{Text: "Receiver " + newReceiver.Name + " already exists"}
 		r.Data["json"] = message
 	} else {
-		config.Receivers = receivers
+		liveConfig.Receivers = receivers
 		go refreshAlertmanager()
-		r.Data["json"] = config.Receivers
+		r.Data["json"] = liveConfig.Receivers
 	}
 
 	r.ServeJSON()
@@ -53,7 +54,7 @@ func (r *ReceiverController) Post() {
 // @Description delete a receiver by name
 // @router /:name [delete]
 func (r *ReceiverController) Delete() {
-	currentConfig := config.Receivers
+	currentConfig := liveConfig.Receivers
 
 	name := r.GetString(":name")
 	log.Println("receiver's name to delete: " + name)
@@ -64,9 +65,9 @@ func (r *ReceiverController) Delete() {
 		message := common.Message{Text: "Receiver " + name + " not found"}
 		r.Data["json"] = message
 	} else {
-		config.Receivers = receivers
+		liveConfig.Receivers = receivers
 		go refreshAlertmanager()
-		r.Data["json"] = config.Receivers
+		r.Data["json"] = liveConfig.Receivers
 	}
 
 	r.ServeJSON()
