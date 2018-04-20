@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"github.com/joshuakwan/almond/models/common"
+	"github.com/prometheus/alertmanager/config"
 )
 
 type InhibitionController struct {
@@ -17,7 +18,7 @@ type InhibitionController struct {
 // @Description get inhibition settings
 // @router / [get]
 func (i *InhibitionController) GetAll() {
-	i.Data["json"] = config.InhibitRules
+	i.Data["json"] = liveConfig.InhibitRules
 	i.ServeJSON()
 }
 
@@ -25,9 +26,9 @@ func (i *InhibitionController) GetAll() {
 // @Description add an inhibition rule
 // @router / [post]
 func (i *InhibitionController) Post() {
-	currentConfig := config.InhibitRules
+	currentConfig := liveConfig.InhibitRules
 
-	var newRule alertmanager.InhibitRule
+	var newRule config.InhibitRule
 
 	body := i.Ctx.Input.RequestBody
 	log.Println(string(body))
@@ -35,12 +36,12 @@ func (i *InhibitionController) Post() {
 	json.Unmarshal(body, &newRule)
 	log.Println(&newRule)
 
-	config.InhibitRules = alertmanager.AddInhibitRule(currentConfig, &newRule)
-	log.Println(config.InhibitRules)
+	liveConfig.InhibitRules = alertmanager.AddInhibitRule(currentConfig, &newRule)
+	log.Println(liveConfig.InhibitRules)
 
 	go refreshAlertmanager()
 
-	i.Data["json"] = config.InhibitRules
+	i.Data["json"] = liveConfig.InhibitRules
 	i.ServeJSON()
 }
 
@@ -48,7 +49,7 @@ func (i *InhibitionController) Post() {
 // @Description delete an inhibition rule at a certain index (start at 0)
 // @router /:index [delete]
 func (i *InhibitionController) Delete() {
-	currentConfig := config.InhibitRules
+	currentConfig := liveConfig.InhibitRules
 
 	index, err := strconv.Atoi(i.GetString(":index"))
 	if err != nil {
@@ -58,10 +59,10 @@ func (i *InhibitionController) Delete() {
 		if err != nil {
 			i.Data["json"] = common.Message{Text: "Index " + string(index) + " not in the right range"}
 		} else {
-			config.InhibitRules = rules
-			log.Println(config.InhibitRules)
+			liveConfig.InhibitRules = rules
+			log.Println(liveConfig.InhibitRules)
 			go refreshAlertmanager()
-			i.Data["json"] = config.InhibitRules
+			i.Data["json"] = liveConfig.InhibitRules
 		}
 	}
 

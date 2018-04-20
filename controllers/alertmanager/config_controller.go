@@ -12,6 +12,6 @@ type ConfigController struct {
 // @Description Get current configuration
 // @router / [get]
 func (c *ConfigController) Get() {
-	c.Data["json"] = config
+	c.Data["json"] = liveConfig
 	c.ServeJSON()
 }

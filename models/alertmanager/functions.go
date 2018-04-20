@@ -2,140 +2,18 @@ package alertmanager
 
 import (
 	"io/ioutil"
-	"time"
-
-	"github.com/prometheus/common/model"
-	"github.com/joshuakwan/almond/models/common"
+	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v2"
 	"sync"
+	"github.com/getlantern/deepcopy"
+	"github.com/fatih/structs"
+	"strings"
+	"errors"
 )
-
-var defaultGlobal = Global{
-	ResolveTimeout:  model.Duration(5 * time.Minute),
-	SMTPHello:       "localhost",
-	SMTPRequireTLS:  true,
-	VictorOpsAPIURL: "https://alert.victorops.com/integrations/generic/20131114/alert/",
-	PagerdutyURL:    "https://events.pagerduty.com/v2/enqueue",
-	OpsGenieAPIURL:  "https://api.opsgenie.com/",
-	HipchatAPIURL:   "https://api.hipchat.com/",
-}
-
-var defaultRoute = Route{
-	Continue:       false,
-	GroupWait:      model.Duration(30 * time.Second),
-	GroupInterval:  model.Duration(5 * time.Minute),
-	RepeatInterval: model.Duration(4 * time.Hour),
-}
-
-var defaultEmailConfig = EmailConfig{
-	SendResolved: false,
-	HTML:         `{{ template "email.default.html" . }}`,
-}
-
-var defaultHipchatConfig = HipchatConfig{
-	SendResolved:  false,
-	From:          `{{ template "hipchat.default.from" . }}`,
-	Message:       `{{ template "hipchat.default.message" . }}`,
-	Notify:        false,
-	MessageFormat: "text",
-	Color:         `{{ if eq .Status "firing" }}red{{ else }}green{{ end }}`,
-}
-
-var defaultPagerdutyConfig = PagerdutyConfig{
-	SendResolved: true,
-	Client:       `{{ template "pagerduty.default.client" . }}`,
-	ClientURL:    `{{ template "pagerduty.default.clientURL" . }}`,
-	Description:  `{{ template "pagerduty.default.description" .}}`,
-	Severity:     "error",
-	Details: map[string]string{
-		"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-		"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
-		"num_firing":   `{{ .Alerts.Firing | len }}`,
-		"num_resolved": `{{ .Alerts.Resolved | len }}`,
-	},
-}
-
-var defaultPushoverConfig = PushoverConfig{
-	SendResolved: true,
-	Title:        `{{ template "pushover.default.title" . }}`,
-	Message:      `{{ template "pushover.default.message" . }}`,
-	URL:          `{{ template "pushover.default.url" . }}`,
-	Priority:     `{{ if eq .Status "firing" }}2{{ else }}0{{ end }}`,
-	Retry:        model.Duration(1 * time.Minute),
-	Expire:       model.Duration(1 * time.Hour),
-}
-
-var defaultSlackConfig = SlackConfig{
-	SendResolved: false,
-	Color:        `{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}`,
-	Username:     `{{ template "slack.default.username" . }}`,
-	Title:        `{{ template "slack.default.title" . }}`,
-	TitleLink:    `{{ template "slack.default.titlelink" . }}`,
-	Pretext:      `{{ template "slack.default.pretext" . }}`,
-	Text:         `{{ template "slack.default.text" . }}`,
-	Fallback:     `{{ template "slack.default.fallback" . }}`,
-}
-
-var defaultOpsGenieConfig = OpsGenieConfig{
-	SendResolved: true,
-	Description:  `{{ template "opsgenie.default.description" . }}`,
-	Source:       `{{ template "opsgenie.default.source" . }}`,
-}
-
-var defaultVictorOpsConfig = VictorOpsConfig{
-	SendResolved:      true,
-	MessageType:       "CRITICAL",
-	EntityDisplayName: `{{ template "victorops.default.entity_display_name" . }}`,
-	StateMessage:      `{{ template "victorops.default.state_message" . }}`,
-	MonitoringTool:    `{{ template "victorops.default.monitoring_tool" . }}`,
-}
-
-var defaultWebhookConfig = WebhookConfig{
-	SendResolved: true,
-}
-
-func buildDefaultConfig() (*Config) {
-	defaultConfig := &Config{}
-	defaultConfig.Global = &defaultGlobal
-	defaultConfig.Route = &defaultRoute
-
-	return defaultConfig
-}
-
-// LoadConfig loads alertmanager configuration into object from a string
-func LoadConfig(str string) (*Config, error) {
-	defaultConfig := buildDefaultConfig()
-	config := &Config{}
-	err := yaml.Unmarshal([]byte(str), config)
-
-	if err != nil {
-		return nil, err
-	}
-
-	config.raw = str
-
-	// Set default part
-	common.Update(config, defaultConfig)
-
-	return config, nil
-}
-
-// LoadConfigFromFile loads alertmanager configuration into object from a file
-func LoadConfigFromFile(filename string) (*Config, error) {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	config, err := LoadConfig(string(content))
-	if err != nil {
-		return nil, err
-	}
-	return config, err
-}
 
 var mu sync.Mutex
 
-func SaveConfigToFile(config *Config, filename string) error {
+func SaveConfigToFile(config *config.Config, filename string) error {
 	mu.Lock()
 	defer mu.Unlock()
 	bytes, err := yaml.Marshal(config)
@@ -143,4 +21,68 @@ func SaveConfigToFile(config *Config, filename string) error {
 		return err
 	}
 	return ioutil.WriteFile(filename, bytes, 0644)
+}
+
+func Update(dst *config.GlobalConfig,src *config.GlobalConfig) {
+	deepcopy.Copy(dst, src)
+}
+
+func Delete(g *config.GlobalConfig,key string) {
+	for _, field := range (structs.Fields(g)) {
+		tagName := field.Tag("json")
+		parts := strings.Split(tagName, ",")
+		if key == parts[0] {
+			field.Zero()
+			break
+		}
+	}
+}
+
+func AddInhibitRule(rules []*config.InhibitRule, newRule *config.InhibitRule) []*config.InhibitRule {
+	return append(rules, newRule)
+}
+
+func RemoveInhibitRule(rules []*config.InhibitRule, index int) ([]*config.InhibitRule, error) {
+	if index >= len(rules) || index < 0 {
+		return nil, errors.New("Index " + string(index) + " not in the right range")
+	}
+
+	copy(rules[index:], rules[index+1:])
+	return rules[:len(rules)-1], nil
+}
+
+func AddReceiver(receivers []*config.Receiver, newReceiver *config.Receiver) ([]*config.Receiver, error) {
+	for _, receiver := range (receivers) {
+		if receiver.Name == newReceiver.Name {
+			return nil, errors.New("Receiver " + newReceiver.Name + " already exists")
+		}
+	}
+
+	return append(receivers, newReceiver), nil
+}
+
+func RemoveReceiver(receivers []*config.Receiver, name string) ([]*config.Receiver, error) {
+	for i, receiver := range (receivers) {
+		if receiver.Name == name {
+			copy(receivers[i:], receivers[i+1:])
+			return receivers[:len(receivers)-1], nil
+		}
+	}
+
+	return nil, errors.New("Receiver " + name + " not found")
+}
+
+func Addubroute(route *config.Route, subroute *config.Route) *config.Route {
+	route.Routes = append(route.Routes, subroute)
+	return route
+}
+
+func RemoveSubroute(route *config.Route, index int) (*config.Route, error) {
+	if index >= len(route.Routes) || index < 0 {
+		return nil, errors.New("Index " + string(index) + " not in the right range")
+	}
+	subroutes := route.Routes
+	copy(subroutes[index:], subroutes[index+1:])
+	route.Routes = subroutes[:len(subroutes)-1]
+	return route, nil
 }

@@ -11,6 +11,10 @@ import:
   version: v1.0
 - package: github.com/getlantern/deepcopy
   version: v1
+- package: github.com/prometheus/alertmanager
+  version: v0.15.0-rc.1
+  subpackages:
+  - config
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
