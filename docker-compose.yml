@@ -3,6 +3,8 @@ version: "3.2"
 services:
   almond:
     image: joshuakwan/almond
+    networks:
+      - data-network
     volumes:
       - ./resources:/etc/almond
     ports:
@@ -10,6 +12,8 @@ services:
 
   alertmanager:
     image: prom/alertmanager
+    networks:
+      - data-network
     depends_on:
       - almond
     restart: on-failure
@@ -22,6 +26,8 @@ services:
 
   prometheus:
     image: prom/prometheus
+    networks:
+      - data-network
     depends_on:
       - almond
     restart: on-failure
@@ -34,6 +40,8 @@ services:
 
   grafana:
     image: grafana/grafana
+    networks:
+      - data-network
     ports:
       - "3000:3000"
 
@@ -41,7 +49,7 @@ services:
   consul-agent-1: &consul-agent
     image: consul:latest
     networks:
-      - consul-demo
+      - consul-network
     command: "agent -retry-join consul-server-bootstrap -client 0.0.0.0"
 
   consul-agent-2:
@@ -58,9 +66,22 @@ services:
     <<: *consul-server
 
   consul-server-bootstrap:
-    <<: *consul-agent
+    image: consul:latest
     ports:
+      - "8300:8300"
       - "8400:8400"
       - "8500:8500"
       - "8600:8600"
-    command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0"
+     networks:
+       consul-network:
+         ipv4_address: 172.19.0.253
+       data-network:
+     command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0 -bind 172.19.0.253 "
+
+networks:
+  data-network:
+  consul-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/16

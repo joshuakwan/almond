@@ -4,30 +4,20 @@ global:
 
 rule_files:
    - "first.rules"
-  # - "second.rules"
+   - "second.rules"
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['prometheus:9090']
 
-  - job_name: 'node'
-    static_configs:
-      - targets: ['localhost:9100']
-
-  - job_name: 'local_redis_1'
-    static_configs:
-      - targets: ['localhost:9121']
-
-  - job_name: 'local_redis_2'
-    static_configs:
-      - targets: ['localhost:9122']
-
-#   - job_name: 'aliyun_mongo'
-#    static_configs:
-#      - targets: ['47.75.168.133:9001']
+  - job_name: 'consul'
+    consul_sd_configs:
+      - server: consul-server-bootstrap:8500
+        tag_separator: ','
+        scheme: http
 
 alerting:
    alertmanagers:
    - static_configs:
-     - targets: ['localhost:9093','localhost:9003']
+     - targets: ['alertmanager:9093']
