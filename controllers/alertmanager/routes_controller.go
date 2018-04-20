@@ -36,7 +36,7 @@ func (r *RouteController) Post() {
 	json.Unmarshal(body,&newSubroute)
 	log.Println(&newSubroute)
 
-	liveConfig.Route = alertmanager.Addubroute(currentConfig, &newSubroute)
+	liveConfig.Route = alertmanager.AddSubroute(currentConfig, &newSubroute)
 	log.Println(liveConfig.Route)
 
 	go refreshAlertmanager()

@@ -72,7 +72,7 @@ func RemoveReceiver(receivers []*config.Receiver, name string) ([]*config.Receiv
 	return nil, errors.New("Receiver " + name + " not found")
 }
 
-func Addubroute(route *config.Route, subroute *config.Route) *config.Route {
+func AddSubroute(route *config.Route, subroute *config.Route) *config.Route {
 	route.Routes = append(route.Routes, subroute)
 	return route
 }
