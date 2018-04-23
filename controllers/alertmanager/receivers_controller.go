@@ -33,7 +33,10 @@ func (r *ReceiverController) Post() {
 	body := r.Ctx.Input.RequestBody
 	log.Println(string(body))
 
-	json.Unmarshal(body, &newReceiver)
+	err:=json.Unmarshal(body, &newReceiver)
+	if err!=nil{
+		r.CustomAbort(400, "Invalid JSON object")
+	}
 	log.Println(&newReceiver)
 
 	receivers,err := alertmanager.AddReceiver(currentConfig, &newReceiver)

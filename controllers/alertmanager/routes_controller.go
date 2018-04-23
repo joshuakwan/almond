@@ -33,7 +33,10 @@ func (r *RouteController) Post() {
 	body:= r.Ctx.Input.RequestBody
 	log.Println(string(body))
 
-	json.Unmarshal(body,&newSubroute)
+	err:=json.Unmarshal(body,&newSubroute)
+	if err!=nil{
+		r.CustomAbort(400, "Invalid JSON object")
+	}
 	log.Println(&newSubroute)
 
 	liveConfig.Route = alertmanager.AddSubroute(currentConfig, &newSubroute)

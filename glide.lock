@@ -1,5 +1,5 @@
-hash: b8c7642cf5646141ff1791b41ff4e2084779073d2bced28d066f46408bd33e7c
-updated: 2018-04-20T11:15:48.600125+08:00
+hash: 1191f354bde1bcee10a2df8c401777200c3b793a0862745e22e2a63d24dbed66
+updated: 2018-04-20T16:30:31.129242+08:00
 imports:
 - name: github.com/astaxie/beego
   version: bf5c5626ab429e66d88602e1ab1ab5fbf4629a01
@@ -16,6 +16,10 @@ imports:
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/getlantern/deepcopy
   version: b923171e8640f94369e21e324b1b0465cb82ec9f
+- name: github.com/hashicorp/consul
+  version: fb848fc48818f58690db09d14640513aa6bf3c02
+  subpackages:
+  - api
 - name: github.com/prometheus/alertmanager
   version: acb111e812530bec1ac6d908bc14725793e07cf3
   subpackages:
@@ -23,12 +27,13 @@ imports:
 - name: github.com/prometheus/common
   version: d0f7cd64bda49e08b22ae8a730aa57aa0db125d6
   subpackages:
+  - config
   - model
 - name: gopkg.in/yaml.v2
   version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: 27662f8dae2790b8232164d7570f54ba76144bc3
+  version: e1d10e7424f54589aa3caa8f87ce2934d1890e45
   subpackages:
   - js
 - name: github.com/jtolds/gls

@@ -30,10 +30,14 @@ func (g *GlobalController) Put() {
 	body := g.Ctx.Input.RequestBody
 	log.Println(string(body))
 
-	json.Unmarshal(body, &newGlobal)
+	err := json.Unmarshal(body, &newGlobal)
+	if err!=nil{
+		g.CustomAbort(400, "Invalid JSON object")
+	}
+
 	log.Println(newGlobal)
 
-	alertmanager.Update(currentConfig,&newGlobal)
+	alertmanager.Update(currentConfig, &newGlobal)
 	log.Println(currentConfig)
 
 	go refreshAlertmanager()
@@ -51,7 +55,7 @@ func (g *GlobalController) Delete() {
 	key := g.GetString(":key")
 	log.Println(key)
 
-	alertmanager.Delete(currentConfig,key)
+	alertmanager.Delete(currentConfig, key)
 
 	go refreshAlertmanager()
 

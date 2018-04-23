@@ -33,7 +33,10 @@ func (i *InhibitionController) Post() {
 	body := i.Ctx.Input.RequestBody
 	log.Println(string(body))
 
-	json.Unmarshal(body, &newRule)
+	err :=json.Unmarshal(body, &newRule)
+	if err!=nil{
+		i.CustomAbort(400, "Invalid JSON object")
+	}
 	log.Println(&newRule)
 
 	liveConfig.InhibitRules = alertmanager.AddInhibitRule(currentConfig, &newRule)
