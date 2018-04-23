@@ -1,21 +1,21 @@
 version: "3.2"
 
 services:
-  almond:
-    image: joshuakwan/almond
-    networks:
-      - data-network
-    volumes:
-      - ./resources:/etc/almond
-    ports:
-      - "8080:8080"
+#  almond:
+#    image: joshuakwan/almond
+#    networks:
+#      - data-network
+#    volumes:
+#      - ./resources:/etc/almond
+#    ports:
+#      - "8080:8080"
 
   alertmanager:
-    image: prom/alertmanager
+    image: prom/alertmanager:v0.15.0-rc.1
     networks:
       - data-network
-    depends_on:
-      - almond
+#    depends_on:
+#      - almond
     restart: on-failure
     ports:
       - "9093:9093"
@@ -28,8 +28,8 @@ services:
     image: prom/prometheus
     networks:
       - data-network
-    depends_on:
-      - almond
+#    depends_on:
+#      - almond
     restart: on-failure
     ports:
       - "9090:9090"
@@ -72,16 +72,20 @@ services:
       - "8400:8400"
       - "8500:8500"
       - "8600:8600"
-     networks:
-       consul-network:
-         ipv4_address: 172.19.0.253
-       data-network:
-     command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0 -bind 172.19.0.253 "
+    networks:
+      consul-network:
+        ipv4_address: 172.20.0.253
+      data-network:
+    command: "agent -server -bootstrap-expect 3 -ui -client 0.0.0.0 -bind 172.20.0.253 "
 
 networks:
   data-network:
-  consul-network:
     ipam:
       driver: default
       config:
         - subnet: 172.19.0.0/16
+  consul-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

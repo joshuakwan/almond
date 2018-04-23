@@ -11,6 +11,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/joshuakwan/almond/controllers/alertmanager"
 	"github.com/joshuakwan/almond/controllers/prometheus"
+	"github.com/joshuakwan/almond/controllers/consul"
 )
 
 func init() {
@@ -54,4 +55,14 @@ func init() {
 		),
 	)
 	beego.AddNamespace(nsPrometheus)
+
+	consulNamespaceRoot := "/consul/"
+	nsConsul := beego.NewNamespace(namespaceRoot,
+		beego.NSNamespace(consulNamespaceRoot+"services",
+			beego.NSInclude(
+				&consul.ConsulController{},
+			),
+		),
+	)
+	beego.AddNamespace(nsConsul)
 }
