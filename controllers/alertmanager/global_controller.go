@@ -6,6 +6,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"log"
 	"github.com/joshuakwan/almond/models/alertmanager"
+	"github.com/joshuakwan/almond/facade"
 )
 
 type GlobalController struct {
@@ -40,7 +41,7 @@ func (g *GlobalController) Put() {
 	alertmanager.Update(currentConfig, &newGlobal)
 	log.Println(currentConfig)
 
-	go refreshAlertmanager()
+	go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 
 	g.Data["json"] = currentConfig
 	g.ServeJSON()
@@ -57,7 +58,7 @@ func (g *GlobalController) Delete() {
 
 	alertmanager.Delete(currentConfig, key)
 
-	go refreshAlertmanager()
+	go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 
 	g.Data["json"] = currentConfig
 	g.ServeJSON()

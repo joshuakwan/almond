@@ -1,0 +1,11 @@
+groups:
+- name: redis
+  rules:
+    - alert: RedisDown
+      expr: redis_up == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Redis {{ $labels.addr }} is down"
+        description: "Reported from {{ $labels.instance }}: Redis {{ $labels.addr }} of job {{ $labels.job }} has been down for more than 1 minute."
