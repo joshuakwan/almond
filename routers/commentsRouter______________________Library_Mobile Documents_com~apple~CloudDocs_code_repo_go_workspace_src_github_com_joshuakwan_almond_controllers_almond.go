@@ -10,16 +10,16 @@ func init() {
 	beego.GlobalControllerRouter["github.com/joshuakwan/almond/controllers/almond:FacadeController"] = append(beego.GlobalControllerRouter["github.com/joshuakwan/almond/controllers/almond:FacadeController"],
 		beego.ControllerComments{
 			Method: "Post",
-			Router: `/`,
+			Router: `/:tenant/services`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["github.com/joshuakwan/almond/controllers/almond:FacadeController"] = append(beego.GlobalControllerRouter["github.com/joshuakwan/almond/controllers/almond:FacadeController"],
 		beego.ControllerComments{
-			Method: "DeregisterService",
-			Router: `/:tenant/:service`,
-			AllowHTTPMethods: []string{"delete"},
+			Method: "RegisterGrafanaDashboard",
+			Router: `/dashboards/:name`,
+			AllowHTTPMethods: []string{"post"},
 			MethodParams: param.Make(),
 			Params: nil})
 
