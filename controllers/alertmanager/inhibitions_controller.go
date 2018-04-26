@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/joshuakwan/almond/facade"
 )
 
 type InhibitionController struct {
@@ -42,7 +43,7 @@ func (i *InhibitionController) Post() {
 	liveConfig.InhibitRules = alertmanager.AddInhibitRule(currentConfig, &newRule)
 	log.Println(liveConfig.InhibitRules)
 
-	go refreshAlertmanager()
+	go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 
 	i.Data["json"] = liveConfig.InhibitRules
 	i.ServeJSON()
@@ -64,7 +65,7 @@ func (i *InhibitionController) Delete() {
 		} else {
 			liveConfig.InhibitRules = rules
 			log.Println(liveConfig.InhibitRules)
-			go refreshAlertmanager()
+			go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 			i.Data["json"] = liveConfig.InhibitRules
 		}
 	}

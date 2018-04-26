@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/joshuakwan/almond/facade"
 )
 
 type RouteController struct {
@@ -42,7 +43,7 @@ func (r *RouteController) Post() {
 	liveConfig.Route = alertmanager.AddSubroute(currentConfig, &newSubroute)
 	log.Println(liveConfig.Route)
 
-	go refreshAlertmanager()
+	go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 
 	r.Data["json"] = liveConfig.Route
 	r.ServeJSON()
@@ -64,7 +65,7 @@ func (r *RouteController) Delete() {
 		} else {
 			liveConfig.Route = route
 			log.Println(liveConfig.Route)
-			go refreshAlertmanager()
+			go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 			r.Data["json"] = liveConfig.Route
 		}
 	}

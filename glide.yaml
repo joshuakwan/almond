@@ -19,6 +19,11 @@ import:
   version: v1.0.7
   subpackages:
   - api
+- package: github.com/joshuakwan/grafana-client
+  subpackages:
+  - api
+  - models
+- package: github.com/heptiolabs/healthcheck
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3

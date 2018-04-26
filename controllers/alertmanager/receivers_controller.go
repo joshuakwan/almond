@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/joshuakwan/almond/models/common"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/joshuakwan/almond/facade"
 )
 
 type ReceiverController struct {
@@ -46,7 +47,7 @@ func (r *ReceiverController) Post() {
 		r.Data["json"] = message
 	} else {
 		liveConfig.Receivers = receivers
-		go refreshAlertmanager()
+		go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 		r.Data["json"] = liveConfig.Receivers
 	}
 
@@ -69,7 +70,7 @@ func (r *ReceiverController) Delete() {
 		r.Data["json"] = message
 	} else {
 		liveConfig.Receivers = receivers
-		go refreshAlertmanager()
+		go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
 		r.Data["json"] = liveConfig.Receivers
 	}
 

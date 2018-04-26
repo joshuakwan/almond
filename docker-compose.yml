@@ -37,6 +37,7 @@ services:
       - ./resources:/etc/almond:ro
     command:
       - --config.file=/etc/almond/prometheus.yml
+      - --web.enable-lifecycle
 
   grafana:
     image: grafana/grafana
