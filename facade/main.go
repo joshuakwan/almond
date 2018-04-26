@@ -3,37 +3,40 @@ package facade
 import (
 	"github.com/astaxie/beego"
 	"github.com/joshuakwan/almond/models/almond"
-	"github.com/hashicorp/consul/api"
-	grafana_api "github.com/joshuakwan/grafana-client/api"
+	consul_api "github.com/hashicorp/consul/api"
 	grafana_models "github.com/joshuakwan/grafana-client/models"
 	"encoding/json"
 	"log"
 	"errors"
-	"net/http"
+	"fmt"
 )
 
-var (
-	consulUrl    = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::consul_url")
-	ConsulClient = InitializeConsulClient(consulUrl)
-
-	prometheusUrl = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_url")
-
-	grafanaUrl      = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_url")
-	grafanaKey      = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_bearer_token")
-	grafanaUser     = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_admin_user")
-	grafanaPassword = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_admin_password")
-	grafanaClient   = grafana_api.Client{
-		GrafanaURL:    grafanaUrl,
-		BearerToken:   grafanaKey,
-		AdminUser:     grafanaUser,
-		AdminPassword: grafanaPassword,
-	}
-
+// constants
+const (
 	consulRoot    = "almond/"
 	tenantsRoot   = consulRoot + "tenants/"
 	dashboardRoot = consulRoot + "grafana_dashboards/"
-	//servicesKey = "/services"
+)
 
+// URLs
+var (
+	alertmanagerUrl = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::alertmanager_url")
+	consulUrl       = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::consul_url")
+	grafanaUrl      = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_url")
+	prometheusUrl   = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_url")
+)
+
+// clients
+var (
+	consulClient  = getConsulClient(consulUrl)
+	grafanaClient = getGrafanClient(grafanaUrl,
+		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_bearer_token"),
+		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_admin_user"),
+		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_admin_password"))
+)
+
+// variables
+var (
 	grafanaDatasource *grafana_models.Datasource
 )
 
@@ -41,52 +44,26 @@ func init() {
 	log.Println("do some ugly initialization stuff")
 	log.Println("check the liveness of dependent services")
 
-	checkGrafana()
+	checkAlertmanager()
 	checkConsul()
-}
-
-func checkGrafana() {
-	log.Println("check the readiness of grafana, do some stuff as needed")
-	// grafana should be living
-	err := checkURLLiveness(grafanaUrl)
-	if err != nil {
-		log.Println("grafana unreachable, error: ", err)
-		panic(err)
-	} else {
-		log.Println("grafana is running")
-	}
-}
-
-func checkConsul() {
-	log.Println("check the readiness of consul, do some stuff as needed")
-	err := checkURLLiveness(consulUrl)
-	if err != nil {
-		log.Println("consul unreachable, error: ", err)
-		panic(err)
-	} else {
-		log.Println("consul is running")
-	}
-}
-
-func checkURLLiveness(url string) error {
-	_, err := http.Get(url)
-	return err
+	checkGrafana()
+	checkPrometheus()
 }
 
 // RegisterDashboard register a dashboard (its json data) to consul under grafana_dashboards/
 func RegisterDashboard(name string, jsondata []byte) error {
 	key := dashboardRoot + name
-	log.Println("register dashboard at " + key)
+	log.Println("register dashboard at", key)
 
-	p := &api.KVPair{Key: key, Value: jsondata}
-	_, err := ConsulClient.KV().Put(p, nil)
+	p := &consul_api.KVPair{Key: key, Value: jsondata}
+	_, err := consulClient.KV().Put(p, nil)
 	return err
 }
 
 func getData(key string) ([]byte, error) {
-	pair, _, err := ConsulClient.KV().Get(key, nil)
+	pair, _, err := consulClient.KV().Get(key, nil)
 	if pair == nil {
-		return nil, errors.New(key + " not found")
+		return nil, errors.New(fmt.Sprint("%v not found", key))
 	}
 	return pair.Value, err
 }
@@ -114,17 +91,6 @@ func checkIfTenantExists(tenantName string) bool {
 	}
 }
 
-func putTenant(tenant *almond.Tenant) error {
-	data, err := json.Marshal(tenant)
-	if err != nil {
-		return err
-	}
-
-	p := &api.KVPair{Key: tenantsRoot + tenant.Name, Value: data}
-	_, err = ConsulClient.KV().Put(p, nil)
-	return err
-}
-
 func getDashboardData(dashboardKey string) ([]byte, error) {
 	return getData(dashboardKey)
 }
@@ -135,69 +101,58 @@ func getDashboardData(dashboardKey string) ([]byte, error) {
 //   3. create a new org user
 //   4. assign the user to the new org
 //   5. TODO generate an admin key of the new org - need to redesign, defer to post PoC phase
-//   6. TODO create datasource
+//   6. create datasource
 //   7. create a new folder in consul kv store tenants/{tenant name}
-// TODO need a fallback mechanism - defer to post PoC phase
 // TODO happy path done, need to make it robust and consistent
 func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 	// 1. check if the tenant already exists
 	log.Println("check if tenant " + tenant.Name + " exists")
 	if checkIfTenantExists(tenant.Name) == true {
-		return nil, errors.New("tenant " + tenant.Name + " already exists")
+		return nil, errors.New(fmt.Sprintf("tenant %v already exists", tenant.Name))
 	}
+
+	log.Println("create tenant", tenant.Name)
+	doer := &commander{}
 
 	// 2. create a new grafana org
-	log.Println("create tenant " + tenant.Name)
-	tenant.GrafanaURL = grafanaUrl
-	if tenant.GrafanaOrgName == "" {
-		tenant.GrafanaOrgName = tenant.Name
+	cmdGrafanaOrgCreation := &grafanaOrgCreationCommand{
+		grafana:    grafanaClient,
+		grafanaURL: grafanaUrl,
+		tenant:     tenant,
 	}
-	log.Println("create new grafana org: " + tenant.GrafanaOrgName)
-	message, err := grafanaClient.CreateOrganization(&grafana_models.GrafanaOrganization{
-		Name: tenant.GrafanaOrgName,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	tenant.GrafanaOrgID = message.OrgID
+	doer.addCommand(cmdGrafanaOrgCreation)
 
 	// 3. create a new org user
-	log.Println("create the org user " + tenant.GrafanaOrgName)
-	messageUser, err := grafanaClient.CreateGlobalUser(&grafana_models.User{
-		Name:     tenant.GrafanaOrgUser,
-		Login:    tenant.GrafanaOrgUser,
-		Password: tenant.GrafanaOrgUserPassword,
-	})
-	log.Println(messageUser)
-	if err != nil {
-		return nil, err
+	cmdGrafanaUserCreation := &grafanaUserCreationCommand{
+		grafana: grafanaClient,
+		tenant:  tenant,
 	}
+	doer.addCommand(cmdGrafanaUserCreation)
 
 	// 4. assign the user to the new org
-	log.Println("assign the user to the org " + tenant.GrafanaOrgName)
-	_, err = grafanaClient.AddOrganizationUser(tenant.GrafanaOrgID, tenant.GrafanaOrgUser, "Admin")
-	if err != nil {
-		return nil, err
+	cmdGrafanaUserAssignment := &grafanaUserAssignmentCommand{
+		grafana: grafanaClient,
+		tenant:  tenant,
 	}
+	doer.addCommand(cmdGrafanaUserAssignment)
 
 	// 6. create datasource
-	log.Println("create datasource in the org")
-	datasource := grafana_models.Datasource{
-		Name:   tenant.Name + "_prometheus",
-		Type:   "prometheus",
-		URL:    prometheusUrl,
-		Access: "proxy",
+	cmdGrafanaDatasourceCreation := &grafanaDatasourceCreationCommand{
+		grafana: grafanaClient,
+		tenant:  tenant,
 	}
-	messageDatasource, err := grafanaClient.AdminCreateDatasource(tenant.GrafanaOrgID, &datasource)
-	log.Println(messageDatasource)
-	if err != nil {
-		return nil, err
-	}
+	doer.addCommand(cmdGrafanaDatasourceCreation)
 
 	// 7. create a new tenant entry in consul kv store as tenants/{tenant name}
-	err = putTenant(tenant)
+	cmdTenantPut := &putTenantCommand{
+		consul: consulClient,
+		tenant: tenant,
+	}
+	doer.addCommand(cmdTenantPut)
+
+	err := doer.execute()
 	if err != nil {
+		doer.rollback()
 		return nil, err
 	}
 
@@ -210,7 +165,7 @@ func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 //   2. do grafana stuff
 //   3. link the service id to the tenant in the kv store
 // TODO happy path done, need to make it robust and consistent
-func RegisterService(tenantName string, service *api.AgentServiceRegistration) (*almond.Tenant, error) {
+func RegisterService(tenantName string, service *consul_api.AgentServiceRegistration) (*almond.Tenant, error) {
 	// get tenant for info
 	targetTenant, err := getTenant(tenantName)
 	if err != nil {
@@ -218,8 +173,8 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 	}
 
 	// register the service to consul
-	log.Println("register service: " + service.ID)
-	err = ConsulClient.Agent().ServiceRegister(service)
+	log.Println("register service: %v", service.ID)
+	err = consulClient.Agent().ServiceRegister(service)
 	if err != nil {
 		log.Println(err.Error())
 		return nil, err
@@ -229,13 +184,13 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 	dashboardKey := dashboardRoot + service.Name
 
 	// fetch dashboard
-	log.Println("fetch dashboard: " + dashboardKey)
+	log.Println("fetch dashboard: %v", dashboardKey)
 	dashboardData, err := getDashboardData(dashboardKey)
 	if err != nil {
 		return nil, err
 	}
 	if dashboardData == nil {
-		return nil, errors.New("dashboard not found at " + dashboardKey)
+		return nil, errors.New(fmt.Sprintf("dashboard not found at %v", dashboardKey))
 	}
 
 	message, err := grafanaClient.AdminCreateDashboardFromJSON(targetTenant.GrafanaOrgID, dashboardData)
@@ -249,7 +204,7 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 	}
 
 	// link the service id to the tenant in the kv store
-	log.Println("link service to " + tenantName)
+	log.Println("link service to %v", tenantName)
 
 	tenantInStore, err := getTenant(tenantName)
 	if err != nil {
@@ -264,7 +219,7 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 
 	tenantInStore.Services = append(tenantInStore.Services, &newServiceEntry)
 
-	err = putTenant(tenantInStore)
+	err = putTenant(consulClient, tenantInStore)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +231,7 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 //func DeregisterService(serviceID string, tenantName string) error {
 //	// deregister the service from consul
 //	log.Println("deregister service: " + serviceID)
-//	err := ConsulClient.Agent().ServiceDeregister(serviceID)
+//	err := consulClient.Agent().ServiceDeregister(serviceID)
 //	if err != nil {
 //		return err
 //	}
@@ -285,7 +240,7 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 //	log.Println("unlink service from " + tenantName)
 //	path := tenantsRoot + tenantName
 //
-//	pair, _, err := ConsulClient.KV().Get(path, nil)
+//	pair, _, err := consulClient.KV().Get(path, nil)
 //	if err != nil {
 //		return err
 //	}
@@ -315,6 +270,6 @@ func RegisterService(tenantName string, service *api.AgentServiceRegistration) (
 //	}
 //
 //	p := &api.KVPair{Key: path, Value: data}
-//	_, err = ConsulClient.KV().Put(p, nil)
+//	_, err = consulClient.KV().Put(p, nil)
 //	return err
 //}
