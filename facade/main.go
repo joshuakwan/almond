@@ -60,16 +60,8 @@ func RegisterDashboard(name string, jsondata []byte) error {
 	return err
 }
 
-func getData(key string) ([]byte, error) {
-	pair, _, err := consulClient.KV().Get(key, nil)
-	if pair == nil {
-		return nil, errors.New(fmt.Sprint("%v not found", key))
-	}
-	return pair.Value, err
-}
-
 func getTenant(tenantName string) (*almond.Tenant, error) {
-	data, err := getData(tenantsRoot + tenantName)
+	data, err := getConsulKVData(consulClient, tenantsRoot+tenantName)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +81,6 @@ func checkIfTenantExists(tenantName string) bool {
 	} else {
 		return true
 	}
-}
-
-func getDashboardData(dashboardKey string) ([]byte, error) {
-	return getData(dashboardKey)
 }
 
 // things to do:
@@ -172,59 +160,47 @@ func RegisterService(tenantName string, service *consul_api.AgentServiceRegistra
 		return nil, err
 	}
 
+	doer := &commander{}
+
 	// register the service to consul
-	log.Println("register service: %v", service.ID)
-	err = consulClient.Agent().ServiceRegister(service)
-	if err != nil {
-		log.Println(err.Error())
-		return nil, err
+	cmdConsulServiceReg := &consulServiceRegistrationCommand{
+		consul:  consulClient,
+		service: service,
 	}
+	doer.addCommand(cmdConsulServiceReg)
 
 	// create grafana dashboard
 	dashboardKey := dashboardRoot + service.Name
-
-	// fetch dashboard
-	log.Println("fetch dashboard: %v", dashboardKey)
-	dashboardData, err := getDashboardData(dashboardKey)
-	if err != nil {
-		return nil, err
+	dashboardInfo := &almond.GrafanaDashboard{}
+	cmdGrafanaDashboardCreation := &grafanaDashboardCreationCommand{
+		consul:        consulClient,
+		grafana:       grafanaClient,
+		tenant:        targetTenant,
+		dashboardKey:  dashboardKey,
+		dashboardInfo: dashboardInfo,
 	}
-	if dashboardData == nil {
-		return nil, errors.New(fmt.Sprintf("dashboard not found at %v", dashboardKey))
-	}
-
-	message, err := grafanaClient.AdminCreateDashboardFromJSON(targetTenant.GrafanaOrgID, dashboardData)
-	if err != nil {
-		return nil, err
-	}
-	dashboardInfo := almond.GrafanaDashboard{
-		UID:  message.UID,
-		URL:  message.URL,
-		Slug: message.Slug,
-	}
+	doer.addCommand(cmdGrafanaDashboardCreation)
 
 	// link the service id to the tenant in the kv store
-	log.Println("link service to %v", tenantName)
-
-	tenantInStore, err := getTenant(tenantName)
-	if err != nil {
-		return nil, err
-	}
-
 	newServiceEntry := almond.Service{
 		ServiceID:   service.ID,
 		ServiceName: service.Name,
-		Dashboard:   &dashboardInfo,
+		Dashboard:   dashboardInfo,
 	}
+	cmdLinkService := &consulLinkServiceCommand{
+		consul:     consulClient,
+		tenantName: tenantName,
+		newService: &newServiceEntry,
+	}
+	doer.addCommand(cmdLinkService)
 
-	tenantInStore.Services = append(tenantInStore.Services, &newServiceEntry)
-
-	err = putTenant(consulClient, tenantInStore)
+	err = doer.execute()
 	if err != nil {
+		doer.rollback()
 		return nil, err
 	}
 
-	return tenantInStore, nil
+	return getTenant(tenantName)
 }
 
 // DeregisterService deregister a service from a tenant

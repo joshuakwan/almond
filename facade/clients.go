@@ -6,6 +6,8 @@ import (
 	grafana_api "github.com/joshuakwan/grafana-client/api"
 	"log"
 	"encoding/json"
+	"errors"
+	"fmt"
 )
 
 func getConsulClient(url string) *consul_api.Client {
@@ -16,6 +18,15 @@ func getConsulClient(url string) *consul_api.Client {
 	}
 	log.Println(client)
 	return client
+}
+
+
+func getConsulKVData(consul *consul_api.Client,key string) ([]byte, error) {
+	pair, _, err := consul.KV().Get(key, nil)
+	if pair == nil {
+		return nil, errors.New(fmt.Sprint("%v not found", key))
+	}
+	return pair.Value, err
 }
 
 func putTenant(consul *consul_api.Client,tenant *almond.Tenant) error {

@@ -6,6 +6,8 @@ import (
 	grafana_api "github.com/joshuakwan/grafana-client/api"
 	consul_api "github.com/hashicorp/consul/api"
 	"log"
+	"errors"
+	"fmt"
 )
 
 type command interface {
@@ -155,5 +157,79 @@ func (c *putTenantCommand) do() error {
 // TODO howto
 func (c *putTenantCommand) undo() error {
 	log.Println("UNDO put tenant into consul")
+	return nil
+}
+
+type consulServiceRegistrationCommand struct {
+	consul  *consul_api.Client
+	service *consul_api.AgentServiceRegistration
+}
+
+func (c *consulServiceRegistrationCommand) do() error {
+	log.Println("DO register service:", c.service.ID)
+	return c.consul.Agent().ServiceRegister(c.service)
+}
+
+func (c *consulServiceRegistrationCommand) undo() error {
+	log.Println("UNDO register service:", c.service.ID)
+	return c.consul.Agent().ServiceDeregister(c.service.ID)
+}
+
+type grafanaDashboardCreationCommand struct {
+	consul        *consul_api.Client
+	grafana       *grafana_api.Client
+	tenant        *almond.Tenant
+	dashboardKey  string
+	dashboardInfo *almond.GrafanaDashboard
+}
+
+func (c *grafanaDashboardCreationCommand) do() error {
+	log.Println("DO create dashboard", c.dashboardKey, "for", c.tenant.Name)
+	log.Println("fetch dashboard:", c.dashboardKey)
+	dashboardData, err := getConsulKVData(c.consul, c.dashboardKey)
+	if err != nil {
+		return err
+	}
+	if dashboardData == nil {
+		return errors.New(fmt.Sprintf("dashboard not found at", c.dashboardKey))
+	}
+
+	message, err := c.grafana.AdminCreateDashboardFromJSON(c.tenant.GrafanaOrgID, dashboardData)
+	if err != nil {
+		return err
+	}
+	c.dashboardInfo.UID = message.UID
+	c.dashboardInfo.URL = message.URL
+	c.dashboardInfo.Slug = message.Slug
+
+	return nil
+}
+
+func (c *grafanaDashboardCreationCommand) undo() error {
+	log.Println("UNDO create dashboard", c.dashboardKey, "for", c.tenant.Name)
+	message, err := c.grafana.AdminDeleteDashboardByUID(c.tenant.GrafanaOrgID, c.dashboardInfo.UID)
+	log.Println(message.Title)
+	return err
+}
+
+type consulLinkServiceCommand struct {
+	consul     *consul_api.Client
+	tenantName string
+	newService *almond.Service
+}
+
+func (c *consulLinkServiceCommand) do() error {
+	log.Println("DO link service to", c.tenantName)
+	tenantInStore, err := getTenant(c.tenantName)
+	if err != nil {
+		return err
+	}
+
+	tenantInStore.Services = append(tenantInStore.Services, c.newService)
+	return putTenant(c.consul, tenantInStore)
+}
+
+// TODO
+func (c *consulLinkServiceCommand) undo() error {
 	return nil
 }
