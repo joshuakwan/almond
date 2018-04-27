@@ -23,7 +23,7 @@ prometheus-alertmanager-grafana stack for service monitoring and alerting.
 
 ### Diagram 
 
-TODO
+![arch](docs/images/almond-arch-PoC.png)
 
 ## Deployment
 
