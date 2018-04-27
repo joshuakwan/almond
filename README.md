@@ -4,6 +4,8 @@ A simple glue solution for simplifying the configuration and use of the
 prometheus-alertmanager-grafana stack for service monitoring and alerting
 in a multi-tenant environment.
 
+almond is still under active development.
+
 ## 1. Architecture
 
 ### 1.1. Components
@@ -46,7 +48,7 @@ Redis is used in this example.
 
 ### Step 1. Launch almond
 
-See [2. Deployement](##2.-Deployment)
+See [2. Deployment](##2.-Deployment)
 
 ### Step 2. Register grafana dashboards
 
@@ -72,7 +74,7 @@ Setup a redis service in anyway you like.
 Download or build the [redis_exporter](https://github.com/oliver006/redis_exporter) and run it against the redis 
 service
 
-## Step 5. Register a new tenant
+### Step 5. Register a new tenant
 
 ```
 POST /api/v1/almond/tenants HTTP/1.1
@@ -87,7 +89,7 @@ Host: almond_url
 }
 ```
 
-## Step 6. Register the redis service to almond under the new tenant
+### Step 6. Register the redis service to almond under the new tenant
 
 ```
 POST /api/v1/almond/xman/services HTTP/1.1
