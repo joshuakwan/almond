@@ -129,7 +129,7 @@ type grafanaDatasourceCreationCommand struct {
 func (c *grafanaDatasourceCreationCommand) do() error {
 	log.Println("DO create datasource in the org")
 	datasource := grafana_models.Datasource{
-		Name:   c.tenant.Name + "_prometheus",
+		Name:   "prometheus",
 		Type:   "prometheus",
 		URL:    prometheusUrl,
 		Access: "proxy",

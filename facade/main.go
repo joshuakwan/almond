@@ -5,7 +5,6 @@ import (
 	"github.com/joshuakwan/almond/models/almond"
 	consul_api "github.com/hashicorp/consul/api"
 	grafana_models "github.com/joshuakwan/grafana-client/models"
-	"encoding/json"
 	"log"
 	"errors"
 	"fmt"
@@ -58,29 +57,6 @@ func RegisterDashboard(name string, jsondata []byte) error {
 	p := &consul_api.KVPair{Key: key, Value: jsondata}
 	_, err := consulClient.KV().Put(p, nil)
 	return err
-}
-
-func getTenant(tenantName string) (*almond.Tenant, error) {
-	data, err := getConsulKVData(consulClient, tenantsRoot+tenantName)
-	if err != nil {
-		return nil, err
-	}
-	var tenant almond.Tenant
-	err = json.Unmarshal(data, &tenant)
-	if err != nil {
-		return nil, err
-	}
-	return &tenant, nil
-}
-
-func checkIfTenantExists(tenantName string) bool {
-	tenant, _ := getTenant(tenantName)
-
-	if tenant == nil {
-		return false
-	} else {
-		return true
-	}
 }
 
 // things to do:
