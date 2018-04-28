@@ -79,6 +79,32 @@ func (c *grafanaOrgCreationCommand) undo() error {
 	return err
 }
 
+type grafanaAdminKeyCreationCommand struct {
+	grafana *grafana_api.Client
+	tenant  *almond.Tenant
+}
+
+func (c *grafanaAdminKeyCreationCommand) do() error {
+	log.Println("DO create new admin key in org ", c.tenant.GrafanaOrgName)
+	message, err := c.grafana.CreateOrganizationAdminKey(c.tenant.GrafanaOrgID)
+	if err == nil {
+		log.Println("key created", message.Name, message.Key)
+		c.tenant.GrafanaOrgAdminKey = message.Key
+		grafanaOrgClients[c.tenant.GrafanaOrgID] = &grafana_api.Client{
+			GrafanaURL:    c.tenant.GrafanaURL,
+			BearerToken:   "Bearer " + c.tenant.GrafanaOrgAdminKey,
+			AdminUser:     "",
+			AdminPassword: "",
+		}
+	}
+	return err
+}
+
+// TODO
+func (c *grafanaAdminKeyCreationCommand) undo() error {
+	return nil
+}
+
 type grafanaUserCreationCommand struct {
 	grafana *grafana_api.Client
 	tenant  *almond.Tenant
@@ -109,7 +135,7 @@ type grafanaUserAssignmentCommand struct {
 
 func (c *grafanaUserAssignmentCommand) do() error {
 	log.Println("DO assign the user to the org", c.tenant.GrafanaOrgName)
-	_, err := c.grafana.AddOrganizationUser(
+	_, err := c.grafana.AdminAddOrganizationUser(
 		c.tenant.GrafanaOrgID,
 		c.tenant.GrafanaOrgUser,
 		"Admin")
@@ -121,9 +147,23 @@ func (c *grafanaUserAssignmentCommand) undo() error {
 	return nil
 }
 
+type grafanaClientsReloadCommand struct {
+}
+
+func (c *grafanaClientsReloadCommand) do() error {
+	log.Println("DO reload grafana org clients")
+	// TODO ugly
+	grafanaOrgClients = getGrafanaOrganizationClients()
+	return nil
+}
+
+func (c *grafanaClientsReloadCommand) undo() error {
+	return nil
+}
+
 type grafanaDatasourceCreationCommand struct {
-	grafana *grafana_api.Client
-	tenant  *almond.Tenant
+	grafanaClients map[int]*grafana_api.Client
+	tenant         *almond.Tenant
 }
 
 func (c *grafanaDatasourceCreationCommand) do() error {
@@ -134,7 +174,7 @@ func (c *grafanaDatasourceCreationCommand) do() error {
 		URL:    prometheusUrl,
 		Access: "proxy",
 	}
-	messageDatasource, err := c.grafana.AdminCreateDatasource(c.tenant.GrafanaOrgID, &datasource)
+	messageDatasource, err := c.grafanaClients[c.tenant.GrafanaOrgID].CreateDatasource(&datasource)
 	log.Println(messageDatasource)
 	return err
 }
@@ -194,7 +234,7 @@ func (c *grafanaDashboardCreationCommand) do() error {
 		return errors.New(fmt.Sprintf("dashboard not found at", c.dashboardKey))
 	}
 
-	message, err := c.grafana.AdminCreateDashboardFromJSON(c.tenant.GrafanaOrgID, dashboardData)
+	message, err := c.grafana.CreateDashboardFromJSON(dashboardData)
 	if err != nil {
 		return err
 	}
@@ -207,7 +247,7 @@ func (c *grafanaDashboardCreationCommand) do() error {
 
 func (c *grafanaDashboardCreationCommand) undo() error {
 	log.Println("UNDO create dashboard", c.dashboardKey, "for", c.tenant.Name)
-	message, err := c.grafana.AdminDeleteDashboardByUID(c.tenant.GrafanaOrgID, c.dashboardInfo.UID)
+	message, err := c.grafana.DeleteDashboardByUID(c.dashboardInfo.UID)
 	log.Println(message.Title)
 	return err
 }
