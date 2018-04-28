@@ -3,7 +3,7 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-   - "redis.rules"
+   - "rules/default.rules"
 
 scrape_configs:
   - job_name: 'prometheus'
