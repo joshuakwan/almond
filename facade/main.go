@@ -28,10 +28,13 @@ var (
 // clients
 var (
 	consulClient  = getConsulClient(consulUrl)
-	grafanaClient = getGrafanClient(grafanaUrl,
+	grafanaClient = getGrafanaClient(grafanaUrl,
 		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_bearer_token"),
 		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_admin_user"),
 		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_admin_password"))
+
+	// key = orgID
+	grafanaOrgClients = getGrafanaOrganizationClients()
 )
 
 // variables
@@ -62,12 +65,11 @@ func RegisterDashboard(name string, jsondata []byte) error {
 // things to do:
 //   1. check if the tenant already exists
 //   2. create a new grafana org
-//   3. create a new org user
-//   4. assign the user to the new org
-//   5. TODO generate an admin key of the new org - need to redesign, defer to post PoC phase
+//   3. TODO generate an admin key of the new org - issue #7
+//   4. create a new global user
+//   5. assign the user to the new org
 //   6. create datasource
 //   7. create a new folder in consul kv store tenants/{tenant name}
-// TODO happy path done, need to make it robust and consistent
 func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 	// 1. check if the tenant already exists
 	log.Println("check if tenant " + tenant.Name + " exists")
@@ -86,33 +88,40 @@ func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 	}
 	doer.addCommand(cmdGrafanaOrgCreation)
 
-	// 3. create a new org user
+	// 3. generate admin key of the new org
+	cmdGrafanaAdminKeyCreation := &grafanaAdminKeyCreationCommand{
+		grafana: grafanaClient,
+		tenant:  tenant,
+	}
+	doer.addCommand(cmdGrafanaAdminKeyCreation)
+
+	// 4. create a new org user
 	cmdGrafanaUserCreation := &grafanaUserCreationCommand{
 		grafana: grafanaClient,
 		tenant:  tenant,
 	}
 	doer.addCommand(cmdGrafanaUserCreation)
 
-	// 4. assign the user to the new org
+	// 5. assign the user to the new org
 	cmdGrafanaUserAssignment := &grafanaUserAssignmentCommand{
 		grafana: grafanaClient,
 		tenant:  tenant,
 	}
 	doer.addCommand(cmdGrafanaUserAssignment)
 
-	// 6. create datasource
-	cmdGrafanaDatasourceCreation := &grafanaDatasourceCreationCommand{
-		grafana: grafanaClient,
-		tenant:  tenant,
-	}
-	doer.addCommand(cmdGrafanaDatasourceCreation)
-
-	// 7. create a new tenant entry in consul kv store as tenants/{tenant name}
+	// 6. create a new tenant entry in consul kv store as tenants/{tenant name}
 	cmdTenantPut := &putTenantCommand{
 		consul: consulClient,
 		tenant: tenant,
 	}
 	doer.addCommand(cmdTenantPut)
+
+	// 8. create datasource
+	cmdGrafanaDatasourceCreation := &grafanaDatasourceCreationCommand{
+		grafanaClients: grafanaOrgClients,
+		tenant:         tenant,
+	}
+	doer.addCommand(cmdGrafanaDatasourceCreation)
 
 	err := doer.execute()
 	if err != nil {
@@ -150,7 +159,7 @@ func RegisterService(tenantName string, service *consul_api.AgentServiceRegistra
 	dashboardInfo := &almond.GrafanaDashboard{}
 	cmdGrafanaDashboardCreation := &grafanaDashboardCreationCommand{
 		consul:        consulClient,
-		grafana:       grafanaClient,
+		grafana:       grafanaOrgClients[targetTenant.GrafanaOrgID],
 		tenant:        targetTenant,
 		dashboardKey:  dashboardKey,
 		dashboardInfo: dashboardInfo,
