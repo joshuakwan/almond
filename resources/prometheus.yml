@@ -13,6 +13,16 @@ scrape_configs:
   - server: consul-server-bootstrap:8500
     scheme: http
     tag_separator: ','
+- job_name: spiderman
+  consul_sd_configs:
+  - server: localhost:8500
+    services:
+    - spiderman
+- job_name: xman
+  consul_sd_configs:
+  - server: http://192.168.99.100:8500
+    services:
+    - xman
 alerting:
   alertmanagers:
   - static_configs:

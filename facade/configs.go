@@ -25,7 +25,7 @@ func writeAlertmanagerConfigToDisk(config *prom_alertmanager.Config, configFilen
 }
 
 func GetPrometheusConfig(configFilename string) *prom_prometheus.Config {
-	log.Println("Read prometheus configuration from " + configFilename)
+	log.Println("read prometheus configuration from " + configFilename)
 	cfg, err := prom_prometheus.LoadFile(configFilename)
 	if err != nil {
 		panic(err)
@@ -33,10 +33,7 @@ func GetPrometheusConfig(configFilename string) *prom_prometheus.Config {
 	return cfg
 }
 
-func writePrometheusConfigToDisk(config *prom_prometheus.Config, configFilename string) {
-	log.Println("Write prometheus configuration to " + configFilename)
-	err := prom_prometheus.SaveConfigToFile(config, configFilename)
-	if err != nil {
-		panic(err)
-	}
+func writePrometheusConfigToDisk(config *prom_prometheus.Config, configFilename string) error {
+	log.Println("write prometheus configuration to " + configFilename)
+	return prom_prometheus.SaveConfigToFile(config, configFilename)
 }

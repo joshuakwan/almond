@@ -8,6 +8,7 @@ import (
 	"log"
 	"errors"
 	"fmt"
+	"github.com/joshuakwan/almond/models/prometheus"
 )
 
 type command interface {
@@ -184,6 +185,8 @@ func (c *grafanaDatasourceCreationCommand) undo() error {
 	return nil
 }
 
+////////////////////////////////////////////////////////////////////////
+
 type putTenantCommand struct {
 	consul *consul_api.Client
 	tenant *almond.Tenant
@@ -200,6 +203,8 @@ func (c *putTenantCommand) undo() error {
 	return nil
 }
 
+////////////////////////////////////////////////////////////////////////
+
 type consulServiceRegistrationCommand struct {
 	consul  *consul_api.Client
 	service *consul_api.AgentServiceRegistration
@@ -214,6 +219,32 @@ func (c *consulServiceRegistrationCommand) undo() error {
 	log.Println("UNDO register service:", c.service.ID)
 	return c.consul.Agent().ServiceDeregister(c.service.ID)
 }
+
+////////////////////////////////////////////////////////////////////////
+
+type prometheusScrapeConfigCreationCommand struct {
+	config *prometheus.Config
+	tenant *almond.Tenant
+}
+
+func (c *prometheusScrapeConfigCreationCommand) do() error {
+	consulSdConfig := &prometheus.ConsulSdConfig{
+		Server:   consulUrl,
+		Services: []string{c.tenant.Name},
+	}
+	scrapeConfig := &prometheus.ScrapeConfig{
+		JobName:         c.tenant.Name,
+		ConsulSdConfigs: []*prometheus.ConsulSdConfig{consulSdConfig},
+	}
+	c.config.ScrapeConfigs = prometheus.AddScrapeConfig(c.config.ScrapeConfigs, scrapeConfig)
+	return nil
+}
+
+func (c *prometheusScrapeConfigCreationCommand) undo() error {
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////
 
 type grafanaDashboardCreationCommand struct {
 	consul        *consul_api.Client

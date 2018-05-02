@@ -43,3 +43,7 @@ func SaveConfigToFile(config *Config, filename string) error {
 	}
 	return ioutil.WriteFile(filename, bytes, 0644)
 }
+
+func AddScrapeConfig(configs []*ScrapeConfig, newConfig *ScrapeConfig) []*ScrapeConfig {
+	return append(configs, newConfig)
+}

@@ -19,10 +19,11 @@ const (
 
 // URLs
 var (
-	alertmanagerUrl = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::alertmanager_url")
-	consulUrl       = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::consul_url")
-	grafanaUrl      = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_url")
-	prometheusUrl   = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_url")
+	alertmanagerUrl      = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::alertmanager_url")
+	consulUrl            = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::consul_url")
+	grafanaUrl           = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_url")
+	prometheusUrl        = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_url")
+	prometheusConfigFile = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_config")
 )
 
 // clients
@@ -40,6 +41,7 @@ var (
 // variables
 var (
 	grafanaDatasource *grafana_models.Datasource
+	prometheusConfig  = GetPrometheusConfig(prometheusConfigFile)
 )
 
 func init() {
@@ -115,6 +117,13 @@ func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 		tenant: tenant,
 	}
 	doer.addCommand(cmdTenantPut)
+
+	// 7. add a prometheus scrape config
+	cmdPrometheusScrapeConfig := &prometheusScrapeConfigCreationCommand{
+		config: prometheusConfig,
+		tenant: tenant,
+	}
+	doer.addCommand(cmdPrometheusScrapeConfig)
 
 	// 8. create datasource
 	cmdGrafanaDatasourceCreation := &grafanaDatasourceCreationCommand{
