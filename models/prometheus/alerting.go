@@ -7,8 +7,8 @@ import (
 
 // Alerting represents alerting section
 type Alerting struct {
-	AlertRelabelConfigs []*RelabelConfig
-	AlertManagers       []*AlertManagerConfig
+	AlertRelabelConfigs []*RelabelConfig `json:"alert_relabel_configs,omitempty" yaml:"alert_relabel_configs,omitempty"`
+	AlertManagers       []*AlertManagerConfig `json:"alertmanagers,omitempty" yaml:"alertmanagers,omitempty"`
 }
 
 // AlertManagerConfig represents alerting.alertmanagers section

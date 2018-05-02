@@ -2,6 +2,12 @@ package prometheus
 
 import (
 	"github.com/astaxie/beego"
+	"github.com/joshuakwan/almond/facade"
+)
+
+var (
+	configFilename = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_config")
+	config         = facade.GetPrometheusConfig(configFilename)
 )
 
 type ConfigController struct {

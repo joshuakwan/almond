@@ -1,22 +1,20 @@
 global:
-  scrape_interval:     15s
+  scrape_interval: 15s
   evaluation_interval: 15s
-
 rule_files:
-   - "rules/default.rules"
-
+- rules/default.rules
 scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['prometheus:9090']
-
-  - job_name: 'consul'
-    consul_sd_configs:
-      - server: consul-server-bootstrap:8500
-        tag_separator: ','
-        scheme: http
-
+- job_name: prometheus
+  static_configs:
+  - targets:
+    - prometheus:9090
+- job_name: consul
+  consul_sd_configs:
+  - server: consul-server-bootstrap:8500
+    scheme: http
+    tag_separator: ','
 alerting:
-   alertmanagers:
-   - static_configs:
-     - targets: ['alertmanager:9093']
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093

@@ -3,6 +3,7 @@ package facade
 import (
 	"net/http"
 	prom_alertmanager "github.com/prometheus/alertmanager/config"
+	prom_prometheus "github.com/joshuakwan/almond/models/prometheus"
 	"log"
 	"github.com/joshuakwan/almond/utils"
 )
@@ -68,5 +69,10 @@ func reloadPrometheusService(serviceUrl string) {
 
 func RefreshAlertmanager(url string, config *prom_alertmanager.Config, configFilename string) {
 	writeAlertmanagerConfigToDisk(config, configFilename)
+	reloadPrometheusService(url)
+}
+
+func RefreshPrometheus(url string, config *prom_prometheus.Config, configFilename string) {
+	writePrometheusConfigToDisk(config, configFilename)
 	reloadPrometheusService(url)
 }

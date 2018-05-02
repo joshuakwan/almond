@@ -1,7 +1,12 @@
 package prometheus
 
-import "io/ioutil"
-import "gopkg.in/yaml.v2"
+import (
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
+	"sync"
+)
+
+var mu sync.Mutex
 
 // LoadConfig loads prometheus configuration into object from a string
 func LoadConfig(str string) (*Config, error) {
@@ -16,8 +21,8 @@ func LoadConfig(str string) (*Config, error) {
 	return config, nil
 }
 
-// LoadConfigFromFile loads prometheus configuration into object from a file
-func LoadConfigFromFile(filename string) (*Config, error) {
+// LoadFile loads prometheus configuration into object from a file
+func LoadFile(filename string) (*Config, error) {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -27,4 +32,14 @@ func LoadConfigFromFile(filename string) (*Config, error) {
 		return nil, err
 	}
 	return config, err
+}
+
+func SaveConfigToFile(config *Config, filename string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	bytes, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, bytes, 0644)
 }

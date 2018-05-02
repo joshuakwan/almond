@@ -34,20 +34,20 @@ func (r *ReceiverController) Post() {
 	body := r.Ctx.Input.RequestBody
 	log.Println(string(body))
 
-	err:=json.Unmarshal(body, &newReceiver)
-	if err!=nil{
+	err := json.Unmarshal(body, &newReceiver)
+	if err != nil {
 		r.CustomAbort(400, "Invalid JSON object")
 	}
 	log.Println(&newReceiver)
 
-	receivers,err := alertmanager.AddReceiver(currentConfig, &newReceiver)
+	receivers, err := alertmanager.AddReceiver(currentConfig, &newReceiver)
 
 	if err != nil {
 		message := common.Message{Text: "Receiver " + newReceiver.Name + " already exists"}
 		r.Data["json"] = message
 	} else {
 		liveConfig.Receivers = receivers
-		go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
+		go facade.RefreshAlertmanager(alertmanagerUrl, liveConfig, configFilename)
 		r.Data["json"] = liveConfig.Receivers
 	}
 
@@ -70,7 +70,7 @@ func (r *ReceiverController) Delete() {
 		r.Data["json"] = message
 	} else {
 		liveConfig.Receivers = receivers
-		go facade.RefreshAlertmanager(alertmanagerUrl,liveConfig,configFilename)
+		go facade.RefreshAlertmanager(alertmanagerUrl, liveConfig, configFilename)
 		r.Data["json"] = liveConfig.Receivers
 	}
 
