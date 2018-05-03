@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/joshuakwan/prometheus-operator/models/prometheus"
+	"github.com/go-resty/resty"
 )
 
 type command interface {
@@ -90,10 +91,10 @@ func (c *grafanaAdminKeyCreationCommand) do() error {
 	message, err := c.grafana.CreateOrganizationAdminKey(c.tenant.GrafanaOrgID)
 	if err == nil {
 		log.Println("key created", message.Name, message.Key)
-		c.tenant.GrafanaOrgAdminKey = message.Key
+		c.tenant.GrafanaOrgAdminKey = "Bearer " + message.Key
 		grafanaOrgClients[c.tenant.GrafanaOrgID] = &grafana_api.Client{
 			GrafanaURL:    c.tenant.GrafanaURL,
-			BearerToken:   "Bearer " + c.tenant.GrafanaOrgAdminKey,
+			BearerToken:   c.tenant.GrafanaOrgAdminKey,
 			AdminUser:     "",
 			AdminPassword: "",
 		}
@@ -223,7 +224,6 @@ func (c *consulServiceRegistrationCommand) undo() error {
 ////////////////////////////////////////////////////////////////////////
 
 type prometheusScrapeConfigCreationCommand struct {
-	config *prometheus.Config
 	tenant *models.Tenant
 }
 
@@ -236,11 +236,17 @@ func (c *prometheusScrapeConfigCreationCommand) do() error {
 		JobName:         c.tenant.Name,
 		ConsulSdConfigs: []*prometheus.ConsulSdConfig{consulSdConfig},
 	}
-	c.config.ScrapeConfigs = prometheus.AddScrapeConfig(c.config.ScrapeConfigs, scrapeConfig)
-	return nil
+	resp, err := resty.R().SetBody(scrapeConfig).Post(promOperatorUrl + "/api/v1/prometheus/scrapes")
+
+	if resp.StatusCode() != HTTP_CODE_OK {
+		return errors.New("Error in API call to prometheus operator")
+	}
+
+	return err
 }
 
 func (c *prometheusScrapeConfigCreationCommand) undo() error {
+	// TODO
 	return nil
 }
 
@@ -266,6 +272,7 @@ func (c *grafanaDashboardCreationCommand) do() error {
 	}
 
 	message, err := c.grafana.CreateDashboardFromJSON(dashboardData)
+	log.Println(message)
 	if err != nil {
 		return err
 	}

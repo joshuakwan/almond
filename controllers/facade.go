@@ -73,11 +73,10 @@ func CreateTenant(tenant *models.Tenant) (*models.Tenant, error) {
 	doer.addCommand(cmdTenantPut)
 
 	// 7. add a prometheus scrape config
-	//cmdPrometheusScrapeConfig := &prometheusScrapeConfigCreationCommand{
-	//	config: prometheusConfig,
-	//	tenant: tenant,
-	//}
-	//doer.addCommand(cmdPrometheusScrapeConfig)
+	cmdPrometheusScrapeConfig := &prometheusScrapeConfigCreationCommand{
+		tenant: tenant,
+	}
+	doer.addCommand(cmdPrometheusScrapeConfig)
 
 	// 8. create datasource
 	cmdGrafanaDatasourceCreation := &grafanaDatasourceCreationCommand{
@@ -101,11 +100,18 @@ func CreateTenant(tenant *models.Tenant) (*models.Tenant, error) {
 //   2. do grafana stuff
 //   3. link the service id to the tenant in the kv store
 // TODO happy path done, need to make it robust and consistent
-func RegisterService(tenantName string, service *consul_api.AgentServiceRegistration) (*models.Tenant, error) {
+func RegisterService(tenantName string, service *models.ServiceRegistration) (*models.Tenant, error) {
 	// get tenant for info
 	targetTenant, err := getTenant(tenantName)
 	if err != nil {
 		return nil, err
+	}
+
+	consulService := &consul_api.AgentServiceRegistration{
+		ID:      tenantName + "-" + service.Type,
+		Name:    tenantName,
+		Port:    service.Port,
+		Address: service.Address,
 	}
 
 	doer := &commander{}
@@ -113,12 +119,12 @@ func RegisterService(tenantName string, service *consul_api.AgentServiceRegistra
 	// register the service to consul
 	cmdConsulServiceReg := &consulServiceRegistrationCommand{
 		consul:  consulClient,
-		service: service,
+		service: consulService,
 	}
 	doer.addCommand(cmdConsulServiceReg)
 
 	// create grafana dashboard
-	dashboardKey := dashboardRoot + service.Name
+	dashboardKey := dashboardRoot + service.Type
 	dashboardInfo := &models.GrafanaDashboard{}
 	cmdGrafanaDashboardCreation := &grafanaDashboardCreationCommand{
 		consul:        consulClient,
@@ -131,8 +137,8 @@ func RegisterService(tenantName string, service *consul_api.AgentServiceRegistra
 
 	// link the service id to the tenant in the kv store
 	newServiceEntry := models.Service{
-		ServiceID:   service.ID,
-		ServiceName: service.Name,
+		ServiceID:   consulService.ID,
+		ServiceName: consulService.Name,
 		Dashboard:   dashboardInfo,
 	}
 	cmdLinkService := &consulLinkServiceCommand{

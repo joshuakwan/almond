@@ -7,9 +7,9 @@ type GrafanaDashboard struct {
 }
 
 type Service struct {
-	ServiceID   string            `json:"service_id,omitempty"` // consul service id
-	ServiceName string            `json:"service_name,omitempty"`
-	Dashboard   *GrafanaDashboard `json:"dashboard,omitempty"` // grafana dashboard info
+	ServiceID   string            `json:"service_id,omitempty"`   // consul service id
+	ServiceName string            `json:"service_name,omitempty"` // consul service name
+	Dashboard   *GrafanaDashboard `json:"dashboard,omitempty"`    // grafana dashboard info
 }
 
 type Tenant struct {
@@ -23,4 +23,10 @@ type Tenant struct {
 	GrafanaOrgUserPassword string     `json:"grafana_org_user_password"` // give it to the tenant
 	GrafanaOrgAdminKey     string     `json:"grafana_org_admin_key"`     // the api key of the admin
 	GrafanaURL             string     `json:"grafana_url,omitempty"`     // target grafana url
+}
+
+type ServiceRegistration struct {
+	Port    int    `json:"port"`
+	Address string `json:"address"`
+	Type    string `json:"type"`
 }

@@ -5,10 +5,6 @@ import (
 	"log"
 	"encoding/json"
 	"github.com/joshuakwan/almond/models"
-	"github.com/hashicorp/consul/api"
-
-	"github.com/joshuakwan/prometheus-operator/models/prometheus"
-	"github.com/go-resty/resty"
 )
 
 type AlmondController struct {
@@ -19,23 +15,7 @@ type AlmondController struct {
 // @Description for development manual test purpose
 // @router /test [post]
 func (c *AlmondController) Test() {
-	consulSdConfig := &prometheus.ConsulSdConfig{
-		Server:   "localhost:8500",
-		Services: []string{"ironman"},
-	}
-	scrapeConfig := &prometheus.ScrapeConfig{
-		JobName:         "ironman",
-		ConsulSdConfigs: []*prometheus.ConsulSdConfig{consulSdConfig},
-	}
 
-	resp, err := resty.R().SetBody(scrapeConfig).Post(promOperatorUrl + "/api/v1/prometheus/scrapes")
-
-	if err != nil {
-		c.CustomAbort(HTTP_CODE_ERROR, err.Error())
-	}
-	if resp.StatusCode() != HTTP_CODE_OK {
-		c.CustomAbort(resp.StatusCode(), "error")
-	}
 }
 
 // @Title CreateTenant
@@ -84,7 +64,7 @@ func (c *AlmondController) Post() {
 	log.Println("register service to", tenantName)
 	log.Println(string(body))
 
-	var newServiceReg api.AgentServiceRegistration
+	var newServiceReg models.ServiceRegistration
 	err := json.Unmarshal(body, &newServiceReg)
 	if err != nil {
 		c.CustomAbort(HTTP_CODE_BAD_REQUEST, err.Error())

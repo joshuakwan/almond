@@ -69,7 +69,7 @@ func checkGrafana() {
 
 func checkConsul() {
 	log.Println("check the readiness of consul, do some stuff as needed")
-	err := utils.CheckURLLiveness(consulUrl)
+	err := utils.CheckURLLiveness("http://" + consulUrl)
 	if err != nil {
 		log.Println("consul unreachable, error:", err)
 		panic(err)
