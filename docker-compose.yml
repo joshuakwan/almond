@@ -9,35 +9,31 @@ services:
 #      - ./resources:/etc/almond
 #    ports:
 #      - "8080:8080"
+#
+#  alertmanager:
+#    image: prom/alertmanager:v0.15.0-rc.1
+#    networks:
+#      - data-network
+#    restart: on-failure
+#    ports:
+#      - "9093:9093"
+#    volumes:
+#      - ./resources:/etc/almond:ro
+#    command:
+#      - --config.file=/etc/almond/alertmanager.yml
 
-  alertmanager:
-    image: prom/alertmanager:v0.15.0-rc.1
-    networks:
-      - data-network
-#    depends_on:
-#      - almond
-    restart: on-failure
-    ports:
-      - "9093:9093"
-    volumes:
-      - ./resources:/etc/almond:ro
-    command:
-      - --config.file=/etc/almond/alertmanager.yml
-
-  prometheus:
-    image: prom/prometheus
-    networks:
-      - data-network
-#    depends_on:
-#      - almond
-    restart: on-failure
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./resources:/etc/almond:ro
-    command:
-      - --config.file=/etc/almond/prometheus.yml
-      - --web.enable-lifecycle
+#  prometheus:
+#    image: prom/prometheus
+#    networks:
+#      - data-network
+#    restart: on-failure
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./resources:/etc/almond:ro
+#    command:
+#      - --config.file=/etc/almond/prometheus.yml
+#      - --web.enable-lifecycle
 
   grafana:
     image: grafana/grafana

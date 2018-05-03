@@ -1,14 +1,14 @@
-package facade
+package controllers
 
 import (
-	"github.com/joshuakwan/almond/models/almond"
+	"github.com/joshuakwan/almond/models"
 	grafana_models "github.com/joshuakwan/grafana-client/models"
 	grafana_api "github.com/joshuakwan/grafana-client/api"
 	consul_api "github.com/hashicorp/consul/api"
 	"log"
 	"errors"
 	"fmt"
-	"github.com/joshuakwan/almond/models/prometheus"
+	"github.com/joshuakwan/prometheus-operator/models/prometheus"
 )
 
 type command interface {
@@ -54,7 +54,7 @@ func (e *commander) rollback() []error {
 type grafanaOrgCreationCommand struct {
 	grafana    *grafana_api.Client
 	grafanaURL string
-	tenant     *almond.Tenant
+	tenant     *models.Tenant
 }
 
 func (c *grafanaOrgCreationCommand) do() error {
@@ -82,7 +82,7 @@ func (c *grafanaOrgCreationCommand) undo() error {
 
 type grafanaAdminKeyCreationCommand struct {
 	grafana *grafana_api.Client
-	tenant  *almond.Tenant
+	tenant  *models.Tenant
 }
 
 func (c *grafanaAdminKeyCreationCommand) do() error {
@@ -108,7 +108,7 @@ func (c *grafanaAdminKeyCreationCommand) undo() error {
 
 type grafanaUserCreationCommand struct {
 	grafana *grafana_api.Client
-	tenant  *almond.Tenant
+	tenant  *models.Tenant
 }
 
 func (c *grafanaUserCreationCommand) do() error {
@@ -131,7 +131,7 @@ func (c *grafanaUserCreationCommand) undo() error {
 
 type grafanaUserAssignmentCommand struct {
 	grafana *grafana_api.Client
-	tenant  *almond.Tenant
+	tenant  *models.Tenant
 }
 
 func (c *grafanaUserAssignmentCommand) do() error {
@@ -164,7 +164,7 @@ func (c *grafanaClientsReloadCommand) undo() error {
 
 type grafanaDatasourceCreationCommand struct {
 	grafanaClients map[int]*grafana_api.Client
-	tenant         *almond.Tenant
+	tenant         *models.Tenant
 }
 
 func (c *grafanaDatasourceCreationCommand) do() error {
@@ -189,7 +189,7 @@ func (c *grafanaDatasourceCreationCommand) undo() error {
 
 type putTenantCommand struct {
 	consul *consul_api.Client
-	tenant *almond.Tenant
+	tenant *models.Tenant
 }
 
 func (c *putTenantCommand) do() error {
@@ -224,7 +224,7 @@ func (c *consulServiceRegistrationCommand) undo() error {
 
 type prometheusScrapeConfigCreationCommand struct {
 	config *prometheus.Config
-	tenant *almond.Tenant
+	tenant *models.Tenant
 }
 
 func (c *prometheusScrapeConfigCreationCommand) do() error {
@@ -249,9 +249,9 @@ func (c *prometheusScrapeConfigCreationCommand) undo() error {
 type grafanaDashboardCreationCommand struct {
 	consul        *consul_api.Client
 	grafana       *grafana_api.Client
-	tenant        *almond.Tenant
+	tenant        *models.Tenant
 	dashboardKey  string
-	dashboardInfo *almond.GrafanaDashboard
+	dashboardInfo *models.GrafanaDashboard
 }
 
 func (c *grafanaDashboardCreationCommand) do() error {
@@ -286,7 +286,7 @@ func (c *grafanaDashboardCreationCommand) undo() error {
 type consulLinkServiceCommand struct {
 	consul     *consul_api.Client
 	tenantName string
-	newService *almond.Service
+	newService *models.Service
 }
 
 func (c *consulLinkServiceCommand) do() error {

@@ -1,13 +1,13 @@
-package facade
+package controllers
 
 import (
-	"github.com/joshuakwan/almond/models/almond"
-	consul_api "github.com/hashicorp/consul/api"
-	grafana_api "github.com/joshuakwan/grafana-client/api"
-	"log"
+	"github.com/joshuakwan/almond/models"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+
+	consul_api "github.com/hashicorp/consul/api"
 )
 
 func getConsulClient(url string) *consul_api.Client {
@@ -47,12 +47,12 @@ func listConsulKVData(consul *consul_api.Client, key string) ([][]byte, error) {
 	return data, err
 }
 
-func getTenant(tenantName string) (*almond.Tenant, error) {
+func getTenant(tenantName string) (*models.Tenant, error) {
 	data, err := getConsulKVData(consulClient, tenantsRoot+tenantName)
 	if err != nil {
 		return nil, err
 	}
-	var tenant almond.Tenant
+	var tenant models.Tenant
 	err = json.Unmarshal(data, &tenant)
 	if err != nil {
 		return nil, err
@@ -60,15 +60,15 @@ func getTenant(tenantName string) (*almond.Tenant, error) {
 	return &tenant, nil
 }
 
-func getTenants() ([]*almond.Tenant, error) {
+func getTenants() ([]*models.Tenant, error) {
 	data, err := listConsulKVData(consulClient, tenantsRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	var tenants []*almond.Tenant
+	var tenants []*models.Tenant
 	for _, d := range (data) {
-		var tenant almond.Tenant
+		var tenant models.Tenant
 		err = json.Unmarshal(d, &tenant)
 		if err != nil {
 			return nil, err
@@ -79,7 +79,7 @@ func getTenants() ([]*almond.Tenant, error) {
 	return tenants, nil
 }
 
-func putTenant(consul *consul_api.Client, tenant *almond.Tenant) error {
+func putTenant(consul *consul_api.Client, tenant *models.Tenant) error {
 	data, err := json.Marshal(tenant)
 	if err != nil {
 		return err
@@ -97,32 +97,5 @@ func checkIfTenantExists(tenantName string) bool {
 		return false
 	} else {
 		return true
-	}
-}
-
-func getGrafanaOrganizationClients() map[int]*grafana_api.Client {
-	var clients = make(map[int]*grafana_api.Client)
-	tenants, err := getTenants()
-	if err != nil {
-		panic(err)
-	}
-	for _, tenant := range (tenants) {
-		clients[tenant.GrafanaOrgID] = &grafana_api.Client{
-			GrafanaURL:    tenant.GrafanaURL,
-			BearerToken:   tenant.GrafanaOrgAdminKey,
-			AdminUser:     "",
-			AdminPassword: "",
-		}
-	}
-
-	return clients
-}
-
-func getGrafanaClient(url string, token string, adminUser string, adminPassword string) *grafana_api.Client {
-	return &grafana_api.Client{
-		GrafanaURL:    url,
-		BearerToken:   token,
-		AdminUser:     adminUser,
-		AdminPassword: adminPassword,
 	}
 }
