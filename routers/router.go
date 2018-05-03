@@ -9,9 +9,7 @@ package routers
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/joshuakwan/almond/controllers/alertmanager"
-	"github.com/joshuakwan/almond/controllers/prometheus"
-	"github.com/joshuakwan/almond/controllers/almond"
+	"github.com/joshuakwan/almond/controllers"
 )
 
 func init() {
@@ -21,49 +19,9 @@ func init() {
 	nsFacade := beego.NewNamespace(namespaceRoot,
 		beego.NSNamespace(facadeNamespaceRoot,
 			beego.NSInclude(
-				&almond.FacadeController{},
+				&controllers.AlmondController{},
 			),
 		),
 	)
 	beego.AddNamespace(nsFacade)
-
-	alertmanagerNamespaceRoot := "/alertmanager/config/"
-	nsAlertmanager := beego.NewNamespace(namespaceRoot,
-		beego.NSNamespace(alertmanagerNamespaceRoot,
-			beego.NSInclude(
-				&alertmanager.ConfigController{},
-			),
-		),
-		beego.NSNamespace(alertmanagerNamespaceRoot+"global",
-			beego.NSInclude(
-				&alertmanager.GlobalController{},
-			),
-		),
-		beego.NSNamespace(alertmanagerNamespaceRoot+"routes",
-			beego.NSInclude(
-				&alertmanager.RouteController{},
-			),
-		),
-		beego.NSNamespace(alertmanagerNamespaceRoot+"inhibitions",
-			beego.NSInclude(
-				&alertmanager.InhibitionController{},
-			),
-		),
-		beego.NSNamespace(alertmanagerNamespaceRoot+"receivers",
-			beego.NSInclude(
-				&alertmanager.ReceiverController{},
-			),
-		),
-	)
-	beego.AddNamespace(nsAlertmanager)
-
-	prometheusNamespaceRoot := "/prometheus/config/"
-	nsPrometheus := beego.NewNamespace(namespaceRoot,
-		beego.NSNamespace(prometheusNamespaceRoot,
-			beego.NSInclude(
-				&prometheus.ConfigController{},
-			),
-		),
-	)
-	beego.AddNamespace(nsPrometheus)
 }

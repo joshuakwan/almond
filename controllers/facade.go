@@ -1,58 +1,12 @@
-package facade
+package controllers
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/joshuakwan/almond/models/almond"
+	"github.com/joshuakwan/almond/models"
 	consul_api "github.com/hashicorp/consul/api"
-	grafana_models "github.com/joshuakwan/grafana-client/models"
 	"log"
 	"errors"
 	"fmt"
 )
-
-// constants
-const (
-	consulRoot    = "almond/"
-	tenantsRoot   = consulRoot + "tenants/"
-	dashboardRoot = consulRoot + "grafana_dashboards/"
-)
-
-// URLs
-var (
-	alertmanagerUrl      = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::alertmanager_url")
-	consulUrl            = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::consul_url")
-	grafanaUrl           = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::grafana_url")
-	prometheusUrl        = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_url")
-	prometheusConfigFile = beego.AppConfig.String(beego.AppConfig.String("runmode") + "::prometheus_config")
-)
-
-// clients
-var (
-	consulClient  = getConsulClient(consulUrl)
-	grafanaClient = getGrafanaClient(grafanaUrl,
-		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_bearer_token"),
-		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_admin_user"),
-		beego.AppConfig.String(beego.AppConfig.String("runmode")+"::grafana_admin_password"))
-
-	// key = orgID
-	grafanaOrgClients = getGrafanaOrganizationClients()
-)
-
-// variables
-var (
-	grafanaDatasource *grafana_models.Datasource
-	prometheusConfig  = GetPrometheusConfig(prometheusConfigFile)
-)
-
-func init() {
-	log.Println("do some ugly initialization stuff")
-	log.Println("check the liveness of dependent services")
-
-	checkAlertmanager()
-	checkConsul()
-	checkGrafana()
-	checkPrometheus()
-}
 
 // RegisterDashboard register a dashboard (its json data) to consul under grafana_dashboards/
 func RegisterDashboard(name string, jsondata []byte) error {
@@ -72,7 +26,7 @@ func RegisterDashboard(name string, jsondata []byte) error {
 //   5. assign the user to the new org
 //   6. create datasource
 //   7. create a new folder in consul kv store tenants/{tenant name}
-func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
+func CreateTenant(tenant *models.Tenant) (*models.Tenant, error) {
 	// 1. check if the tenant already exists
 	log.Println("check if tenant " + tenant.Name + " exists")
 	if checkIfTenantExists(tenant.Name) == true {
@@ -119,11 +73,11 @@ func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 	doer.addCommand(cmdTenantPut)
 
 	// 7. add a prometheus scrape config
-	cmdPrometheusScrapeConfig := &prometheusScrapeConfigCreationCommand{
-		config: prometheusConfig,
-		tenant: tenant,
-	}
-	doer.addCommand(cmdPrometheusScrapeConfig)
+	//cmdPrometheusScrapeConfig := &prometheusScrapeConfigCreationCommand{
+	//	config: prometheusConfig,
+	//	tenant: tenant,
+	//}
+	//doer.addCommand(cmdPrometheusScrapeConfig)
 
 	// 8. create datasource
 	cmdGrafanaDatasourceCreation := &grafanaDatasourceCreationCommand{
@@ -147,7 +101,7 @@ func CreateTenant(tenant *almond.Tenant) (*almond.Tenant, error) {
 //   2. do grafana stuff
 //   3. link the service id to the tenant in the kv store
 // TODO happy path done, need to make it robust and consistent
-func RegisterService(tenantName string, service *consul_api.AgentServiceRegistration) (*almond.Tenant, error) {
+func RegisterService(tenantName string, service *consul_api.AgentServiceRegistration) (*models.Tenant, error) {
 	// get tenant for info
 	targetTenant, err := getTenant(tenantName)
 	if err != nil {
@@ -165,7 +119,7 @@ func RegisterService(tenantName string, service *consul_api.AgentServiceRegistra
 
 	// create grafana dashboard
 	dashboardKey := dashboardRoot + service.Name
-	dashboardInfo := &almond.GrafanaDashboard{}
+	dashboardInfo := &models.GrafanaDashboard{}
 	cmdGrafanaDashboardCreation := &grafanaDashboardCreationCommand{
 		consul:        consulClient,
 		grafana:       grafanaOrgClients[targetTenant.GrafanaOrgID],
@@ -176,7 +130,7 @@ func RegisterService(tenantName string, service *consul_api.AgentServiceRegistra
 	doer.addCommand(cmdGrafanaDashboardCreation)
 
 	// link the service id to the tenant in the kv store
-	newServiceEntry := almond.Service{
+	newServiceEntry := models.Service{
 		ServiceID:   service.ID,
 		ServiceName: service.Name,
 		Dashboard:   dashboardInfo,
